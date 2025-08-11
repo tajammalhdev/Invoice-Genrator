@@ -16,38 +16,29 @@ import {
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { updatePreferencesSettings } from "../../../../../actions/settings";
+import {
+	updateInvoiceSettings,
+	updatePreferencesSettings,
+} from "../../../../../actions/settings";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { redirect } from "next/navigation";
 import { useForm } from "@conform-to/react";
 import { parseWithValibot } from "@conform-to/valibot";
-import {
-	PreferencesInfoSchema,
-	PreferencesSchema,
-} from "@/app/utils/zodSchemas";
+import { PreferencesSchema, type Preferences } from "@/app/utils/zodSchemas";
 import SubmitButton from "@/app/components/SubmitButton";
+import { useSettings } from "@/app/contexts/SettingsContext";
+import { useSettingsForm } from "@/app/hooks/useSettingsForm";
 
-type props = {
-	settings: any;
-};
-export default function Preferences({ settings }: props) {
-	const [state, formAction] = useActionState(
-		updatePreferencesSettings,
-		undefined,
-	);
+export default function Preferences() {
+	const { settings } = useSettings();
 
-	useEffect(() => {
-		if (state && "success" in state && state.success) {
-			toast.success("Settings updated successfully!");
-			redirect("/dashboard/settings");
-		} else if (state && "error" in state && state.error) {
-			toast.error(state.error as string);
-		}
-	}, [state]);
+	const { formAction, isSubmitting } = useSettingsForm({
+		action: updatePreferencesSettings,
+		successMessage: "Company information updated successfully!",
+	});
 
-	const [form, fields] = useForm<PreferencesInfoSchema>({
+	const [form, fields] = useForm<Preferences>({
 		onValidate({ formData }) {
 			return parseWithValibot(formData, { schema: PreferencesSchema });
 		},
@@ -56,14 +47,14 @@ export default function Preferences({ settings }: props) {
 	});
 
 	const [currencyCode, setCurrencyCode] = useState<string>(
-		settings.currencyCode ?? "USD",
+		settings?.currencyCode ?? "USD",
 	);
 
 	const [dateFormat, setDateFormat] = useState<string>(
-		settings.dateFormat ?? "MM/DD/YYYY",
+		settings?.dateFormat ?? "MM/DD/YYYY",
 	);
 
-	const [taxRate, setTaxRate] = useState<number>(settings.taxRate ?? 0);
+	const [taxRate, setTaxRate] = useState<number>(settings?.taxRate ?? 0);
 
 	return (
 		<div className="w-full h-full flex flex-col gap-4">

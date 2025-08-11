@@ -10,42 +10,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import SubmitButton from "@/app/components/SubmitButton";
 import { ImageIcon, UploadCloud } from "lucide-react";
-import { useActionState, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { updateBasicSettings } from "../../../../../actions/settings";
-import {
-	BasicInformationSchema,
-	BasicInfoSchema,
-} from "@/app/utils/zodSchemas";
+import { BasicInfoSchema, type BasicInfo } from "@/app/utils/zodSchemas";
 import { useForm } from "@conform-to/react";
 import { parseWithValibot } from "@conform-to/valibot";
-import { redirect } from "next/navigation";
+import { useSettings } from "@/app/contexts/SettingsContext";
+import { useSettingsForm } from "@/app/hooks/useSettingsForm";
 
-type props = {
-	settings: any;
-};
+export default function BasicInfo() {
+	const { settings } = useSettings();
+	const { formAction, isSubmitting } = useSettingsForm({
+		action: updateBasicSettings,
+		successMessage: "Company information updated successfully!",
+	});
 
-export default function BasicInfo({ settings }: props) {
-	const [state, formAction] = useActionState(updateBasicSettings, undefined);
-
-	const [form, fields] = useForm<BasicInfoSchema>({
+	const [form, fields] = useForm<BasicInfo>({
 		onValidate({ formData }) {
-			return parseWithValibot(formData, { schema: BasicInformationSchema });
+			return parseWithValibot(formData, { schema: BasicInfoSchema });
 		},
 		shouldRevalidate: "onInput",
 		shouldValidate: "onBlur",
 	});
 
-	useEffect(() => {
-		if (state && "success" in state && state.success) {
-			toast.success("Settings updated successfully!");
-			redirect("/dashboard/settings");
-		} else if (state && "error" in state && state.error) {
-			toast.error(state.error as string);
-		}
-	}, [state]);
-
-	const [logoUrl, setLogoUrl] = useState<string>(settings.logoUrl ?? "");
+	const [logoUrl, setLogoUrl] = useState<string>(settings?.logoUrl ?? "");
 
 	return (
 		<div className="w-full h-full flex flex-col gap-4">
@@ -65,7 +54,7 @@ export default function BasicInfo({ settings }: props) {
 							<Input
 								placeholder="Acme Inc"
 								name="companyName"
-								defaultValue={settings.companyName}
+								defaultValue={settings?.companyName}
 							/>
 						</div>
 						<div className="space-y-2">
@@ -74,12 +63,16 @@ export default function BasicInfo({ settings }: props) {
 								type="email"
 								placeholder="billing@acme.com"
 								name="companyEmail"
-								defaultValue={settings.companyEmail}
+								defaultValue={settings?.companyEmail}
 							/>
 						</div>
 						<div className="space-y-2">
 							<Label htmlFor="companyPhone">Phone</Label>
-							<Input placeholder="+1 555 123 4567" />
+							<Input
+								placeholder="+1 555 123 4567"
+								name="companyPhone"
+								defaultValue={settings?.companyPhone}
+							/>
 						</div>
 						<div className="space-y-2 md:col-span-2">
 							<Label>Company Logo</Label>

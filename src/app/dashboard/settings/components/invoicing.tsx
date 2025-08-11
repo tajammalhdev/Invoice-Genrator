@@ -12,41 +12,34 @@ import { updateInvoiceSettings } from "../../../../../actions/settings";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { redirect } from "next/navigation";
-import {
-	InvoiceInformationSchema,
-	InvoiceInfoSchema,
-} from "@/app/utils/zodSchemas";
+import { InvoicingSchema, type Invoicing } from "@/app/utils/zodSchemas";
 import { useForm } from "@conform-to/react";
 import { parseWithValibot } from "@conform-to/valibot";
 import SubmitButton from "@/app/components/SubmitButton";
+import { useSettings } from "@/app/contexts/SettingsContext";
+import { useSettingsForm } from "@/app/hooks/useSettingsForm";
 
-type props = {
-	settings: any;
-};
-export default function Invoicing({ settings }: props) {
-	const [state, formAction] = useActionState(updateInvoiceSettings, undefined);
+export default function Invoicing() {
+	const { settings } = useSettings();
 
-	useEffect(() => {
-		if (state && "success" in state && state.success) {
-			toast.success("Settings updated successfully!");
-			redirect("/dashboard/settings");
-		} else if (state && "error" in state && state.error) {
-			toast.error(state.error as string);
-		}
-	}, [state]);
+	const { formAction, isSubmitting } = useSettingsForm({
+		action: updateInvoiceSettings,
+		successMessage: "Company information updated successfully!",
+	});
 
-	const [form, fields] = useForm<InvoiceInfoSchema>({
+	const [form, fields] = useForm<Invoicing>({
 		onValidate({ formData }) {
-			return parseWithValibot(formData, { schema: InvoiceInformationSchema });
+			return parseWithValibot(formData, { schema: InvoicingSchema });
 		},
 		shouldRevalidate: "onInput",
 		shouldValidate: "onBlur",
 	});
+
 	const [invoicePrefix, setInvoicePrefix] = useState<string>(
-		settings.invoicePrefix ?? "INV",
+		settings?.invoicePrefix ?? "INV",
 	);
 	const [nextInvoiceNumber, setNextInvoiceNumber] = useState<number>(
-		settings.nextInvoiceNumber ?? 1,
+		settings?.nextInvoiceNumber ?? 1,
 	);
 
 	return (

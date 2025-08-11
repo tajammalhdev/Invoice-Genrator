@@ -1,13 +1,15 @@
 "use server";
 import { reqSession } from "@/app/utils/hooks";
 import {
-	BasicInformationSchema,
-	CompanyInformationSchema,
-	InvoiceInformationSchema,
+	SettingsSchema,
+	BasicInfoSchema,
+	CompanyAddressSchema,
 	PreferencesSchema,
+	InvoicingSchema,
 } from "@/app/utils/zodSchemas";
 import prisma from "@/lib/prisma";
 import { parseWithValibot } from "@conform-to/valibot";
+import { Settings } from "@/app/utils/zodSchemas";
 
 export async function updateBasicSettings(prevState: any, formData: FormData) {
 	const session = await reqSession();
@@ -16,7 +18,7 @@ export async function updateBasicSettings(prevState: any, formData: FormData) {
 	}
 
 	const submission = parseWithValibot(formData, {
-		schema: BasicInformationSchema,
+		schema: BasicInfoSchema,
 	});
 	if (submission.status !== "success") {
 		return submission.reply();
@@ -42,7 +44,7 @@ export async function updateCompanySettings(
 	}
 
 	const submission = parseWithValibot(formData, {
-		schema: CompanyInformationSchema,
+		schema: CompanyAddressSchema,
 	});
 	if (submission.status !== "success") {
 		return submission.reply();
@@ -94,7 +96,7 @@ export async function updateInvoiceSettings(
 	}
 
 	const submission = parseWithValibot(formData, {
-		schema: InvoiceInformationSchema,
+		schema: InvoicingSchema,
 	});
 	if (submission.status !== "success") {
 		return submission.reply();
@@ -110,10 +112,10 @@ export async function updateInvoiceSettings(
 	return { success: true, data };
 }
 
-export async function getSettings(userId: string) {
+export async function getSettings(userId: string): Promise<Settings | null> {
 	const session = await reqSession();
 	if (!session) {
-		return { error: "Unauthorized" };
+		return null;
 	}
 
 	const settings = await prisma.setting.findUnique({
@@ -122,5 +124,24 @@ export async function getSettings(userId: string) {
 		},
 	});
 
-	return settings;
+	if (!settings) return null;
+
+	// Transform Prisma types to match our schema types
+	return {
+		companyName: settings.companyName,
+		companyEmail: settings.companyEmail,
+		companyPhone: settings.companyPhone || undefined,
+		logoUrl: settings.logoUrl || undefined,
+		addressLine1: settings.addressLine1 || undefined,
+		addressLine2: settings.addressLine2 || undefined,
+		city: settings.city || undefined,
+		state: settings.state || undefined,
+		postalCode: settings.postalCode || undefined,
+		country: settings.country || undefined,
+		currencyCode: settings.currencyCode,
+		dateFormat: settings.dateFormat,
+		taxRate: Number(settings.taxRate),
+		invoicePrefix: settings.invoicePrefix,
+		nextInvoiceNumber: settings.nextInvoiceNumber,
+	};
 }
