@@ -13,6 +13,7 @@ import { TableBody } from "@/components/ui/table";
 import { TableCell } from "@/components/ui/table";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
+import SingleItem from "./components/SingleItem";
 
 export default function Invoice() {
 	return (
