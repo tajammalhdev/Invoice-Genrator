@@ -1,0 +1,41 @@
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "./components/_dashboard/AppSideabr";
+import { SiteHeader } from "./components/_dashboard/SiteHeader";
+import { Suspense } from "react";
+import { reqSession } from "../../lib/hooks";
+
+export default async function DashboardLayout({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	const session = await reqSession();
+	return (
+		<SidebarProvider
+			style={
+				{
+					"--sidebar-width": "calc(var(--spacing) * 72)",
+					"--header-height": "calc(var(--spacing) * 12)",
+				} as React.CSSProperties
+			}>
+			<AppSidebar variant="inset" />
+			<SidebarInset>
+				<SiteHeader />
+				<div className="flex flex-1 flex-col">
+					<div className="@container/main flex flex-1 flex-col gap-2">
+						<div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+							<Suspense
+								fallback={
+									<div className="flex h-full w-full items-center justify-center content-center">
+										Loading...
+									</div>
+								}>
+								{children}
+							</Suspense>
+						</div>
+					</div>
+				</div>
+			</SidebarInset>
+		</SidebarProvider>
+	);
+}

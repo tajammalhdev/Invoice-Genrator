@@ -1,15 +1,8 @@
 "use server";
-import { reqSession } from "@/app/utils/hooks";
-import {
-	SettingsSchema,
-	BasicInfoSchema,
-	CompanyAddressSchema,
-	PreferencesSchema,
-	InvoicingSchema,
-} from "@/app/utils/zodSchemas";
+import { reqSession } from "@/lib/hooks";
+import { SettingsSchema } from "@/lib/zodSchemas";
 import prisma from "@/lib/prisma";
-import { parseWithValibot } from "@conform-to/valibot";
-import { Settings } from "@/app/utils/zodSchemas";
+import { Settings } from "@/lib/zodSchemas";
 
 export async function updateBasicSettings(prevState: any, formData: FormData) {
 	const session = await reqSession();
@@ -17,21 +10,7 @@ export async function updateBasicSettings(prevState: any, formData: FormData) {
 		return { error: "Unauthorized" };
 	}
 
-	const submission = parseWithValibot(formData, {
-		schema: BasicInfoSchema,
-	});
-	if (submission.status !== "success") {
-		return submission.reply();
-	}
-
-	const data = await prisma.setting.update({
-		where: {
-			userId: session?.user?.id,
-		},
-		data: submission.value,
-	});
-
-	return { success: true, data };
+	return { success: true };
 }
 
 export async function updateCompanySettings(
@@ -43,73 +22,7 @@ export async function updateCompanySettings(
 		return { error: "Unauthorized" };
 	}
 
-	const submission = parseWithValibot(formData, {
-		schema: CompanyAddressSchema,
-	});
-	if (submission.status !== "success") {
-		return submission.reply();
-	}
-
-	const data = await prisma.setting.update({
-		where: {
-			userId: session?.user?.id,
-		},
-		data: submission.value,
-	});
-
-	return { success: true, data };
-}
-
-export async function updatePreferencesSettings(
-	prevState: any,
-	formData: FormData,
-) {
-	const session = await reqSession();
-	if (!session) {
-		return { error: "Unauthorized" };
-	}
-
-	const submission = parseWithValibot(formData, {
-		schema: PreferencesSchema,
-	});
-	if (submission.status !== "success") {
-		return submission.reply();
-	}
-
-	const data = await prisma.setting.update({
-		where: {
-			userId: session?.user?.id,
-		},
-		data: submission.value,
-	});
-
-	return { success: true, data };
-}
-
-export async function updateInvoiceSettings(
-	prevState: any,
-	formData: FormData,
-) {
-	const session = await reqSession();
-	if (!session) {
-		return { error: "Unauthorized" };
-	}
-
-	const submission = parseWithValibot(formData, {
-		schema: InvoicingSchema,
-	});
-	if (submission.status !== "success") {
-		return submission.reply();
-	}
-
-	const data = await prisma.setting.update({
-		where: {
-			userId: session?.user?.id,
-		},
-		data: submission.value,
-	});
-
-	return { success: true, data };
+	return { success: true };
 }
 
 export async function getSettings(userId: string): Promise<Settings | null> {
@@ -130,10 +43,10 @@ export async function getSettings(userId: string): Promise<Settings | null> {
 	return {
 		companyName: settings.companyName,
 		companyEmail: settings.companyEmail,
-		companyPhone: settings.companyPhone || undefined,
-		logoUrl: settings.logoUrl || undefined,
-		addressLine1: settings.addressLine1 || undefined,
-		addressLine2: settings.addressLine2 || undefined,
+		companyPhone: settings.companyPhone || "",
+		logoUrl: settings.logoUrl || "",
+		addressLine1: settings.addressLine1 || "",
+		addressLine2: settings.addressLine2 || "",
 		city: settings.city || undefined,
 		state: settings.state || undefined,
 		postalCode: settings.postalCode || undefined,

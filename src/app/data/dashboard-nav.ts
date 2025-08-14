@@ -26,12 +26,12 @@ export const data = {
 		},
 		{
 			title: "Invoices",
-			url: "/dashboard/invoice",
+			url: "/invoice",
 			icon: IconInvoice,
 		},
 		{
 			title: "Clients",
-			url: "#",
+			url: "/clients",
 			icon: IconUsers,
 		},
 		{
@@ -96,7 +96,7 @@ export const data = {
 	navSecondary: [
 		{
 			title: "Settings",
-			url: "/dashboard/settings",
+			url: "/settings",
 			icon: IconSettings,
 		},
 	],

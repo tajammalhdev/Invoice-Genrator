@@ -1,4 +1,4 @@
-import { auth } from "@/app/utils/auth";
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import path from "path";
 import { promises as fs } from "fs";
