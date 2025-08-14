@@ -142,3 +142,18 @@ export const InvoiceDetailsSchema = z.object({
 
 export type InvoiceDetails = z.infer<typeof InvoiceDetailsSchema>;
 export type Item = z.infer<typeof ItemSchema>;
+
+// Client Schema
+export const ClientSchema = z.object({
+	name: fieldValidators.name,
+	email: fieldValidators.email,
+	company: fieldValidators.stringOptional,
+	phone: fieldValidators.phone,
+	address: fieldValidators.address,
+	city: fieldValidators.city,
+	state: fieldValidators.optionalAddress,
+	postalCode: fieldValidators.zipCode,
+	country: fieldValidators.country,
+});
+
+export type Clients = z.infer<typeof ClientSchema>;
