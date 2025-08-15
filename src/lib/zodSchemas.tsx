@@ -145,6 +145,7 @@ export type Item = z.infer<typeof ItemSchema>;
 
 // Client Schema
 export const ClientSchema = z.object({
+	id: z.string().optional(),
 	name: fieldValidators.name,
 	email: fieldValidators.email,
 	company: fieldValidators.stringOptional,
@@ -154,6 +155,8 @@ export const ClientSchema = z.object({
 	state: fieldValidators.optionalAddress,
 	postalCode: fieldValidators.zipCode,
 	country: fieldValidators.country,
+	createdAt: z.date().optional(),
+	updatedAt: z.date().optional(),
 });
 
 export type Clients = z.infer<typeof ClientSchema>;

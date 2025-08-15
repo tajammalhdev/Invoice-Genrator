@@ -47,22 +47,54 @@ export async function POST(request: NextRequest) {
 	}
 }
 
+//Get Clients
+
 export async function GET(request: NextRequest) {
 	try {
 		const session = await auth();
 		const userId = (session as any)?.user?.id as string | undefined;
 
 		if (!userId) {
-			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+			return NextResponse.json(
+				{ error: "Unauthorized access" },
+				{ status: 401 },
+			);
 		}
+		const { searchParams } = new URL(request.url);
+		const page = searchParams.get("page") || "1";
+		const clientId = searchParams.get("clientId") || "";
+
+		//limit
+		const limit = 10;
 
 		const clients = await prisma.client.findMany({
 			where: {
 				userId: userId,
+				...(clientId && {
+					id: {
+						contains: clientId,
+					},
+				}),
+			},
+			skip: (Number(page) - 1) * limit,
+			take: limit,
+			orderBy: {
+				createdAt: "desc",
 			},
 		});
 
-		return NextResponse.json(clients);
+		const total = await prisma.client.count({
+			where: {
+				userId: userId,
+				...(clientId && {
+					id: {
+						contains: clientId,
+					},
+				}),
+			},
+		});
+
+		return NextResponse.json({ clients, total });
 	} catch (error) {
 		return NextResponse.json(
 			{ error: "Internal Server Error" },

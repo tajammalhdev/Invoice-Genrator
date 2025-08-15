@@ -26,7 +26,7 @@ export const data = {
 		},
 		{
 			title: "Invoices",
-			url: "/invoice",
+			url: "/invoices",
 			icon: IconInvoice,
 		},
 		{

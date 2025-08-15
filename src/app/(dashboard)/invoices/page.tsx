@@ -26,7 +26,7 @@ export default function Invoice() {
 					</p>
 				</div>
 				<Button className="flex items-center gap-2" asChild>
-					<Link href="/dashboard/invoice/create">
+					<Link href="/invoices/create">
 						<Plus className="h-4 w-4" />
 						Create Invoice
 					</Link>
