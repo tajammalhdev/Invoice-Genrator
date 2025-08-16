@@ -131,6 +131,7 @@ model Invoice {
   status    InvoiceStatus @default(DRAFT)
   items     InvoiceItem[]
   payments  Payment[]
+  discount  Float?
   subtotal  Float         @default(0)
   tax       Float         @default(0)
   total     Float         @default(0)

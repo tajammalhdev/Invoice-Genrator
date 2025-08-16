@@ -115,27 +115,28 @@ export const ItemSchema = z.object({
 	description: fieldValidators.stringMin1,
 	quantity: fieldValidators.quantity,
 	unitPrice: fieldValidators.unitPrice,
-	total: fieldValidators.stringToNumber,
+	total: z.number(),
 });
 
 const PaymentSchema = z.object({
-	amount: fieldValidators.stringToNumber,
+	amount: z.string(),
 	method: fieldValidators.string,
 	receivedAt: fieldValidators.date,
 });
 
 export const InvoiceDetailsSchema = z.object({
-	invoiceNumber: fieldValidators.stringMin1,
-	issueDate: fieldValidators.date,
-	dueDate: fieldValidators.date,
-	notes: fieldValidators.stringOptional,
+	invoiceNumber: z.string().min(1, { message: "invoice no. required" }),
+	issueDate: z.date({ message: "Invoice date is required" }),
+	dueDate: z.date({ message: "invoice due date" }),
+	notes: z.string().optional(),
 	status: z.enum(InvoiceStatus),
 	items: z.array(ItemSchema),
 	payments: z.array(PaymentSchema),
-	subtotal: fieldValidators.stringToNumber,
-	tax: fieldValidators.stringToNumber,
-	total: fieldValidators.stringToNumber,
-	paidTotal: fieldValidators.stringToNumber,
+	subtotal: z.number(),
+	discount: z.number().optional(),
+	tax: z.number(),
+	total: z.number(),
+	paidTotal: z.number(),
 	language: fieldValidators.string,
 	currency: fieldValidators.string,
 });
