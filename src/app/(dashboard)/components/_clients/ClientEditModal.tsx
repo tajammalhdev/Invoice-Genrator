@@ -12,15 +12,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ClientSchema } from "@/lib/zodSchemas";
 import FormInput from "../_shared/FormInput";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function ClientEditModal({
 	client,
 	isOpen,
 	onClose,
+	onUpdate,
 }: {
 	client: Clients;
 	isOpen: boolean;
 	onClose: () => void;
+	onUpdate?: (updatedClient: Clients) => void;
 }) {
 	const {
 		register,
@@ -34,7 +37,30 @@ export default function ClientEditModal({
 	});
 
 	const handleFormSubmit = async (data: Clients) => {
-		console.log(data);
+		try {
+			const response = await fetch(`/api/clients`, {
+				method: "PUT",
+				body: JSON.stringify({ clientId: client.id, ...data }),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			if (response.ok) {
+				const updatedClient = { ...client, ...data };
+				toast.success("Client updated successfully");
+
+				// Notify parent component about the update
+				if (onUpdate) {
+					onUpdate(updatedClient);
+				}
+
+				onClose();
+			} else {
+				toast.error("Failed to update client");
+			}
+		} catch (error) {
+			toast.error("Failed to update client");
+		}
 	};
 
 	useEffect(() => {
@@ -164,7 +190,7 @@ export default function ClientEditModal({
 					{/* Form Actions */}
 					<div className="flex gap-3 pt-4 border-t">
 						<Button type="submit" className="flex-1" disabled={isSubmitting}>
-							{isSubmitting ? "Adding Client..." : "Add Client"}
+							{isSubmitting ? "Updating Client..." : "Update Client"}
 						</Button>
 						<Button
 							type="button"

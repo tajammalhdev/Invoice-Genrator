@@ -47,6 +47,38 @@ export async function POST(request: NextRequest) {
 	}
 }
 
+export async function PUT(request: NextRequest) {
+	try {
+		const session = await auth();
+		const userId = (session as any)?.user?.id as string | undefined;
+
+		const { clientId, ...data } = await request.json();
+
+		if (!userId) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		if (!clientId) {
+			return NextResponse.json(
+				{ error: "Client ID is required" },
+				{ status: 400 },
+			);
+		}
+
+		const client = await prisma.client.update({
+			where: { id: clientId, userId: userId },
+			data,
+		});
+
+		return NextResponse.json(client, { status: 200 });
+	} catch (error) {
+		return NextResponse.json(
+			{ error: "Internal Server Error" },
+			{ status: 500 },
+		);
+	}
+}
+
 //Get Clients
 
 export async function GET(request: NextRequest) {
@@ -95,6 +127,33 @@ export async function GET(request: NextRequest) {
 		});
 
 		return NextResponse.json({ clients, total });
+	} catch (error) {
+		return NextResponse.json(
+			{ error: "Internal Server Error" },
+			{ status: 500 },
+		);
+	}
+}
+
+export async function DELETE(request: NextRequest) {
+	try {
+		const session = await auth();
+		const userId = (session as any)?.user?.id as string | undefined;
+
+		const { clientId } = await request.json();
+
+		if (!userId) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		const client = await prisma.client.delete({
+			where: {
+				id: clientId,
+				userId: userId,
+			},
+		});
+
+		return NextResponse.json(client, { status: 200 });
 	} catch (error) {
 		return NextResponse.json(
 			{ error: "Internal Server Error" },

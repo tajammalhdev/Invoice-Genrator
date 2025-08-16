@@ -17,14 +17,14 @@ type ClientDetailsProps = {
 	onClose: () => void;
 };
 
-export default function ClientDetails({
+export default function ClientDetailsModal({
 	client,
 	isOpen,
 	onClose,
 }: ClientDetailsProps) {
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+			<DialogContent className="w-[90vw] max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle className="text-2xl">Client Details</DialogTitle>
 					<p className="text-muted-foreground">
