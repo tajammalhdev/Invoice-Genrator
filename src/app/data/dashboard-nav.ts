@@ -12,6 +12,88 @@ import {
 	IconInvoice,
 } from "@tabler/icons-react";
 
+// Route configuration type
+export interface RouteConfig {
+	path: string;
+	title: string;
+	breadcrumb?: string;
+	icon?: any;
+}
+
+// Centralized route configuration
+export const routeConfig: Record<string, RouteConfig> = {
+	"/": {
+		path: "/",
+		title: "Dashboard",
+		breadcrumb: "Dashboard",
+		icon: IconDashboard,
+	},
+	"/clients": {
+		path: "/clients",
+		title: "Clients",
+		breadcrumb: "Clients",
+		icon: IconUsers,
+	},
+	"/invoices": {
+		path: "/invoices",
+		title: "Invoices",
+		breadcrumb: "Invoices",
+		icon: IconInvoice,
+	},
+	"/invoices/create": {
+		path: "/invoices/create",
+		title: "Create Invoice",
+		breadcrumb: "Invoices / Create",
+		icon: IconInvoice,
+	},
+	"/settings": {
+		path: "/settings",
+		title: "Settings",
+		breadcrumb: "Settings",
+		icon: IconSettings,
+	},
+	"/onboarding": {
+		path: "/onboarding",
+		title: "Onboarding",
+		breadcrumb: "Onboarding",
+		icon: IconDashboard,
+	},
+};
+
+// Utility function to get page title from pathname
+export const getPageTitle = (pathname: string): string => {
+	// Exact match first
+	if (routeConfig[pathname]) {
+		return routeConfig[pathname].title;
+	}
+
+	// Check for nested routes (like /invoices/create)
+	for (const [route, config] of Object.entries(routeConfig)) {
+		if (pathname.startsWith(route) && route !== "/") {
+			console.log(config.title);
+			return config.title;
+		}
+	}
+
+	// Fallback
+	return routeConfig["/"]?.title || "Dashboard";
+};
+
+// Utility function to get breadcrumb
+export const getBreadcrumb = (pathname: string): string => {
+	if (routeConfig[pathname]) {
+		return routeConfig[pathname].breadcrumb || routeConfig[pathname].title;
+	}
+
+	for (const [route, config] of Object.entries(routeConfig)) {
+		if (pathname.startsWith(route) && route !== "/") {
+			return config.breadcrumb || config.title;
+		}
+	}
+
+	return routeConfig["/"]?.breadcrumb || "Dashboard";
+};
+
 export const data = {
 	user: {
 		name: "shadcn",
@@ -21,7 +103,7 @@ export const data = {
 	navMain: [
 		{
 			title: "Dashboard",
-			url: "/dashboard",
+			url: "/",
 			icon: IconDashboard,
 		},
 		{

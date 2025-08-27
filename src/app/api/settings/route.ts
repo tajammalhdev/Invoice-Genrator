@@ -26,3 +26,22 @@ export async function GET(request: Request) {
 
 	return NextResponse.json(settings);
 }
+
+export async function POST(request: Request) {
+	const session = await auth();
+	const userId = (session as any)?.user?.id as string | undefined;
+
+	if (!userId) {
+		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	const body = await request.json();
+
+	const settings = await prisma.setting.update({
+		where: {
+			userId: userId,
+		},
+		data: body,
+	});
+	return NextResponse.json(settings);
+}

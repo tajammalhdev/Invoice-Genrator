@@ -50,7 +50,7 @@ export default function FormInput<T extends FieldValues>({
 	return (
 		<div className={cn("space-y-2", className)}>
 			{label && (
-				<Label htmlFor={name} className="text-sm font-medium">
+				<Label htmlFor={name} className="">
 					{label}
 					{required && <span className="text-destructive ml-1">*</span>}
 				</Label>
@@ -61,7 +61,10 @@ export default function FormInput<T extends FieldValues>({
 				type={type}
 				placeholder={placeholder}
 				{...register(name)}
-				className={cn("w-full", hasError && "border-destructive")}
+				className={cn(
+					"w-full mt-3 border border-gray-300 shadow-none",
+					hasError && "border-destructive",
+				)}
 				step={step}
 				min={min}
 				max={max}

@@ -125,7 +125,6 @@ export async function GET(request: NextRequest) {
 				}),
 			},
 		});
-
 		return NextResponse.json({ clients, total });
 	} catch (error) {
 		return NextResponse.json(

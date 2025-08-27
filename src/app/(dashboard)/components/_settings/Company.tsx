@@ -29,7 +29,6 @@ export default function Company() {
 						errors={errors}
 						placeholder="123 Main St"
 						type="text"
-						required
 					/>
 				</div>
 				<div className="space-y-2 md:col-span-2">
@@ -40,7 +39,6 @@ export default function Company() {
 						errors={errors}
 						placeholder="Suite 100"
 						type="text"
-						required
 					/>
 				</div>
 				<div className="space-y-2">
@@ -51,7 +49,6 @@ export default function Company() {
 						errors={errors}
 						placeholder="New York"
 						type="text"
-						required
 					/>
 				</div>
 				<div className="space-y-2">
@@ -62,7 +59,6 @@ export default function Company() {
 						errors={errors}
 						placeholder="NY"
 						type="text"
-						required
 					/>
 				</div>
 				<div className="space-y-2">
@@ -73,7 +69,6 @@ export default function Company() {
 						errors={errors}
 						placeholder="10001"
 						type="text"
-						required
 					/>
 				</div>
 				<div className="space-y-2">
@@ -84,7 +79,6 @@ export default function Company() {
 						errors={errors}
 						placeholder="United States"
 						type="text"
-						required
 					/>
 				</div>
 			</CardContent>

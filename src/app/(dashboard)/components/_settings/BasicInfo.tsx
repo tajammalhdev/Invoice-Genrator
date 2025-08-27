@@ -54,7 +54,6 @@ export default function BasicInfo() {
 							errors={errors}
 							placeholder="Acme Inc"
 							type="text"
-							required
 						/>
 					</div>
 					<div className="space-y-2">
@@ -65,7 +64,6 @@ export default function BasicInfo() {
 							errors={errors}
 							placeholder="billing@acme.com"
 							type="email"
-							required
 						/>
 					</div>
 					<div className="space-y-2">

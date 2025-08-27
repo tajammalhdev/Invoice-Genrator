@@ -1,102 +1,99 @@
-import { InvoiceStatus } from "@prisma/client";
 import { z } from "zod";
 
-// Field Validators
-export const fieldValidators = {
-	// String validators
-	name: z
-		.string()
-		.min(2, "Must be at least 2 characters")
-		.max(50, "Must be at most 50 characters"),
-	address: z
-		.string()
-		.min(2, "Must be at least 2 characters")
-		.max(70, "Must be at most 70 characters"),
-	optionalAddress: z
-		.string()
-		.min(2, "Must be at least 2 characters")
-		.max(70, "Must be at most 70 characters")
-		.optional(),
-	zipCode: z
-		.string()
-		.min(2, "Must be at least 2 characters")
-		.max(20, "Must be at most 20 characters"),
-	optionalZipCode: z
-		.string()
-		.min(2, "Must be at least 2 characters")
-		.max(20, "Must be at most 20 characters")
-		.optional(),
-	city: z
-		.string()
-		.min(1, "Must be at least 1 character")
-		.max(50, "Must be at most 50 characters"),
-	optionalCity: z
-		.string()
-		.min(1, "Must be at least 1 character")
-		.max(50, "Must be at most 50 characters")
-		.optional(),
-	country: z
-		.string()
-		.min(1, "Must be at least 1 character")
-		.max(70, "Must be at most 70 characters"),
-	optionalCountry: z
-		.string()
-		.min(1, "Must be at least 1 character")
-		.max(70, "Must be at most 70 characters")
-		.optional(),
-	email: z
-		.string()
-		.email("Email must be a valid email")
-		.min(5, "Must be at least 5 characters")
-		.max(100, "Must be at most 100 characters"),
-	phone: z
-		.string()
-		.min(1, "Must be at least 1 character")
-		.max(20, "Must be at most 20 characters"),
-	optionalPhone: z.string().optional(),
-	quantity: z.number().min(1, "Must be a number greater than 0"),
-	unitPrice: z
-		.number()
-		.min(0.01, "Must be a number greater than 0")
-		.max(Number.MAX_SAFE_INTEGER, `Must be ≤ ${Number.MAX_SAFE_INTEGER}`),
-	nonNegativeNumber: z.number().min(0, "Must be a positive number"),
+// Manual enum definitions since Prisma client doesn't include them yet
+const InvoiceStatus = {
+	DRAFT: "DRAFT",
+	PENDING: "PENDING",
+	PAID: "PAID",
+	OVERDUE: "OVERDUE",
+} as const;
 
-	// String validators
-	string: z.string(),
-	stringMin1: z.string().min(1, "Must be at least 1 character"),
-	stringOptional: z.string().optional(),
-
-	// Transform validators
-	stringToNumber: z.string().transform((val) => Number(val)),
-	stringToNumberWithMax: z
-		.string()
-		.transform((val) => Number(val))
-		.pipe(z.number().max(1000000, "Value must be 1,000,000 or less")),
-	// Dates
-	date: z
-		.string()
-		.transform((value) =>
-			new Date(value).toLocaleDateString("en-US", DATE_OPTIONS),
-		),
-};
+const PaymentTerm = {
+	NET1: "NET1",
+	NET7: "NET7",
+	NET14: "NET14",
+	NET30: "NET30",
+} as const;
 
 // Main comprehensive schema for all settings
 export const SettingsSchema = z.object({
-	companyName: fieldValidators.name.optional(),
-	companyEmail: fieldValidators.email.optional(),
-	companyPhone: fieldValidators.phone.optional(),
-	logoUrl: fieldValidators.stringOptional,
-	addressLine1: fieldValidators.address.optional(),
-	addressLine2: fieldValidators.address.optional(),
-	city: fieldValidators.optionalCity,
-	state: fieldValidators.optionalAddress,
-	postalCode: fieldValidators.optionalZipCode,
-	country: fieldValidators.optionalCountry,
-	currencyCode: z.string().optional(),
-	dateFormat: z.string().optional(),
-	taxRate: z.number().optional(),
-	invoicePrefix: z.string().optional(),
-	nextInvoiceNumber: z.number().optional(),
+	companyName: z
+		.string()
+		.min(1, "Company name is required")
+		.max(100, "Company name must be less than 100 characters"),
+	companyEmail: z
+		.string()
+		.min(1, "Company email is required")
+		.email("Please enter a valid email address")
+		.max(100, "Email must be less than 100 characters"),
+	companyPhone: z
+		.string()
+		.min(1, "Company phone is required")
+		.regex(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"),
+	logoUrl: z
+		.string()
+		.url("Please enter a valid URL")
+		.optional()
+		.or(z.literal("")),
+	addressLine1: z
+		.string()
+		.min(1, "Address line 1 is required")
+		.max(100, "Address must be less than 100 characters")
+		.optional()
+		.or(z.literal("")),
+	addressLine2: z
+		.string()
+		.max(100, "Address must be less than 100 characters")
+		.optional()
+		.or(z.literal("")),
+	city: z
+		.string()
+		.min(1, "City is required")
+		.max(50, "City must be less than 50 characters")
+		.optional()
+		.or(z.literal("")),
+	state: z
+		.string()
+		.min(1, "State is required")
+		.max(50, "State must be less than 50 characters")
+		.optional()
+		.or(z.literal("")),
+	postalCode: z
+		.string()
+		.min(1, "Postal code is required")
+		.max(20, "Postal code must be less than 20 characters")
+		.optional()
+		.or(z.literal("")),
+	country: z
+		.string()
+		.min(1, "Country is required")
+		.max(50, "Country must be less than 50 characters")
+		.optional()
+		.or(z.literal("")),
+	currencyCode: z
+		.string()
+		.min(1, "Currency code is required")
+		.max(3, "Currency code must be 3 characters")
+		.optional(),
+	dateFormat: z
+		.string()
+		.min(1, "Date format is required")
+		.max(20, "Date format must be less than 20 characters")
+		.optional(),
+	taxRate: z
+		.number()
+		.min(0, "Tax rate must be 0 or greater")
+		.max(100, "Tax rate cannot exceed 100%")
+		.optional(),
+	invoicePrefix: z
+		.string()
+		.min(1, "Invoice prefix is required")
+		.max(10, "Invoice prefix must be less than 10 characters")
+		.optional(),
+	nextInvoiceNumber: z
+		.number()
+		.min(1, "Invoice number must be 1 or greater")
+		.optional(),
 });
 
 // Partial schemas for form sections
@@ -109,27 +106,43 @@ const DATE_OPTIONS: Intl.DateTimeFormatOptions = {
 // Type exports
 export type Settings = z.infer<typeof SettingsSchema>;
 
+// Export enums for use in other components
+export { InvoiceStatus, PaymentTerm };
+
 export const ItemSchema = z.object({
 	id: z.string().optional(),
-	name: fieldValidators.stringMin1,
-	description: fieldValidators.stringMin1,
-	quantity: fieldValidators.quantity,
-	unitPrice: fieldValidators.unitPrice,
-	total: z.number(),
+	name: z
+		.string()
+		.min(1, "Item name is required")
+		.max(100, "Item name must be less than 100 characters"),
+	description: z
+		.string()
+		.min(1, "Item description is required")
+		.max(500, "Description must be less than 500 characters"),
+	quantity: z
+		.number()
+		.min(0.01, "Quantity must be greater than 0")
+		.max(999999, "Quantity is too large"),
+	unitPrice: z
+		.number()
+		.min(0, "Unit price must be 0 or greater")
+		.max(999999, "Unit price is too large"),
+	total: z.number().min(0, "Total must be 0 or greater"),
 });
 
 const PaymentSchema = z.object({
-	amount: z.string(),
-	method: fieldValidators.string,
-	receivedAt: fieldValidators.date,
+	amount: z.string().min(1, "Payment amount is required"),
+	method: z.string().min(1, "Payment method is required"),
+	receivedAt: z.date({ message: "Payment date is required" }),
 });
 
 export const InvoiceDetailsSchema = z.object({
+	clientId: z.string().min(1, { message: "Client is required" }),
 	invoiceNumber: z.string().min(1, { message: "invoice no. required" }),
 	issueDate: z.date({ message: "Invoice date is required" }),
 	dueDate: z.date({ message: "invoice due date" }),
 	notes: z.string().optional(),
-	status: z.enum(InvoiceStatus),
+	status: z.enum(Object.values(InvoiceStatus) as [string, ...string[]]),
 	items: z.array(ItemSchema),
 	payments: z.array(PaymentSchema),
 	subtotal: z.number(),
@@ -137,8 +150,9 @@ export const InvoiceDetailsSchema = z.object({
 	tax: z.number(),
 	total: z.number(),
 	paidTotal: z.number(),
-	language: fieldValidators.string,
-	currency: fieldValidators.string,
+	paymentTerm: z.enum(Object.values(PaymentTerm) as [string, ...string[]]),
+	language: z.string().min(1, "Language is required"),
+	currency: z.string().min(1, "Currency is required"),
 });
 
 export type InvoiceDetails = z.infer<typeof InvoiceDetailsSchema>;
@@ -146,16 +160,45 @@ export type Item = z.infer<typeof ItemSchema>;
 
 // Client Schema
 export const ClientSchema = z.object({
-	id: z.string().optional(),
-	name: fieldValidators.name,
-	email: fieldValidators.email,
-	company: fieldValidators.stringOptional,
-	phone: fieldValidators.phone,
-	address: fieldValidators.address,
-	city: fieldValidators.city,
-	state: fieldValidators.optionalAddress,
-	postalCode: fieldValidators.zipCode,
-	country: fieldValidators.country,
+	id: z.string().min(1, "ID is required").optional(),
+	name: z
+		.string()
+		.min(1, "Name is required")
+		.max(100, "Name must be less than 100 characters"),
+	email: z
+		.string()
+		.min(1, "Email is required")
+		.email("Please enter a valid email address")
+		.max(100, "Email must be less than 100 characters"),
+	company: z
+		.string()
+		.min(1, "Company is required")
+		.max(100, "Company must be less than 100 characters"),
+	phone: z
+		.string()
+		.min(1, "Phone is required")
+		.regex(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number")
+		.max(20, "Phone must be less than 20 characters"),
+	address: z
+		.string()
+		.min(1, "Address is required")
+		.max(200, "Address must be less than 200 characters"),
+	city: z
+		.string()
+		.min(1, "City is required")
+		.max(50, "City must be less than 50 characters"),
+	state: z
+		.string()
+		.min(1, "State is required")
+		.max(50, "State must be less than 50 characters"),
+	postalCode: z
+		.string()
+		.min(1, "Postal code is required")
+		.max(20, "Postal code must be less than 20 characters"),
+	country: z
+		.string()
+		.min(1, "Country is required")
+		.max(50, "Country must be less than 50 characters"),
 	createdAt: z.date().optional(),
 	updatedAt: z.date().optional(),
 });
