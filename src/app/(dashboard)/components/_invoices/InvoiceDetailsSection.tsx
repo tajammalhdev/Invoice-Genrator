@@ -113,7 +113,7 @@ export default function InvoiceDetailsSection({
 									type="number"
 									{...register("discount")}
 									onChange={(e) =>
-										setCustomValue("discount", parseInt(e.target.value) || 0)
+										setCustomValue("discount", e.target.value || "0")
 									}
 									min={0}
 									max={discountType === "percentage" ? 100 : undefined}
