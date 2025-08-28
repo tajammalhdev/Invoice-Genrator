@@ -115,19 +115,23 @@ export const ItemSchema = z.object({
 		.string()
 		.min(1, "Item name is required")
 		.max(100, "Item name must be less than 100 characters"),
-	description: z
-		.string()
-		.min(1, "Item description is required")
-		.max(500, "Description must be less than 500 characters"),
+	description: z.string().optional(),
 	quantity: z
-		.number()
-		.min(0.01, "Quantity must be greater than 0")
-		.max(999999, "Quantity is too large"),
+		.string()
+		.min(1, "Quantity is required")
+		.transform((val) => parseFloat(val) || 0)
+		.refine((val) => val > 0, "Quantity must be greater than 0")
+		.refine((val) => val <= 999999, "Quantity is too large"),
 	unitPrice: z
-		.number()
-		.min(0, "Unit price must be 0 or greater")
-		.max(999999, "Unit price is too large"),
-	total: z.number().min(0, "Total must be 0 or greater"),
+		.string()
+		.min(1, "Unit price is required")
+		.transform((val) => parseFloat(val) || 0)
+		.refine((val) => val >= 0, "Unit price must be 0 or greater")
+		.refine((val) => val <= 999999, "Unit price is too large"),
+	total: z
+		.string()
+		.transform((val) => parseFloat(val) || 0)
+		.refine((val) => val >= 0, "Total must be 0 or greater"),
 });
 
 const PaymentSchema = z.object({
@@ -139,17 +143,26 @@ const PaymentSchema = z.object({
 export const InvoiceDetailsSchema = z.object({
 	clientId: z.string().min(1, { message: "Client is required" }),
 	invoiceNumber: z.string().min(1, { message: "invoice no. required" }),
-	issueDate: z.date({ message: "Invoice date is required" }),
-	dueDate: z.date({ message: "invoice due date" }),
+	issueDate: z
+		.string()
+		.min(1, { message: "Issue date is required" })
+		.transform((val) => new Date(val)),
+	dueDate: z
+		.string()
+		.min(1, { message: "Due date is required" })
+		.transform((val) => new Date(val)),
 	notes: z.string().optional(),
 	status: z.enum(Object.values(InvoiceStatus) as [string, ...string[]]),
 	items: z.array(ItemSchema),
 	payments: z.array(PaymentSchema),
-	subtotal: z.number(),
-	discount: z.number().optional(),
-	tax: z.number(),
-	total: z.number(),
-	paidTotal: z.number(),
+	subtotal: z.string().transform((val) => parseFloat(val) || 0),
+	discount: z
+		.string()
+		.transform((val) => parseFloat(val) || 0)
+		.optional(),
+	tax: z.string().transform((val) => parseFloat(val) || 0),
+	total: z.string().transform((val) => parseFloat(val) || 0),
+	paidTotal: z.string().transform((val) => parseFloat(val) || 0),
 	paymentTerm: z.enum(Object.values(PaymentTerm) as [string, ...string[]]),
 	language: z.string().min(1, "Language is required"),
 	currency: z.string().min(1, "Currency is required"),

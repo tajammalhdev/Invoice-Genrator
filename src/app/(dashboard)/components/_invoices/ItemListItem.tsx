@@ -37,9 +37,12 @@ export default function ItemListItem({
 	const [total, setTotal] = useState("0");
 
 	useEffect(() => {
-		const value = (quantity * price).toFixed(2);
+		const numQuantity = parseFloat(quantity.toString());
+		const numPrice = parseFloat(price.toString());
+		const calculatedTotal = numQuantity * numPrice;
+		const value = calculatedTotal.toFixed(2).toString();
 		setTotal(value);
-		setCustomValue(`items.${index}.total`, parseFloat(value));
+		setCustomValue(`items.${index}.total`, value.toString());
 	}, [quantity, price, setCustomValue, index]);
 
 	return (
@@ -53,6 +56,11 @@ export default function ItemListItem({
 					required
 					className="w-full border-0 bg-transparent p-0 text-sm placeholder:text-gray-400 focus:ring-0 focus:border-b-2 focus:border-blue-500 transition-all"
 				/>
+				{errors.items?.[index]?.name && (
+					<p className="text-sm text-red-500 mt-1">
+						{errors.items?.[index]?.name.message}
+					</p>
+				)}
 			</TableCell>
 
 			{/* Description */}
@@ -60,10 +68,14 @@ export default function ItemListItem({
 				<Textarea
 					{...register(`items.${index}.description`)}
 					placeholder="Item Description"
-					required
 					rows={10}
 					className="w-full py-4 px-4 rounded-md text-sm resize-none border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors min-h-[120px]"
 				/>
+				{errors.items?.[index]?.description && (
+					<p className="text-sm text-red-500 mt-1">
+						{errors.items?.[index]?.description.message}
+					</p>
+				)}
 			</TableCell>
 
 			{/* Quantity */}
@@ -75,6 +87,11 @@ export default function ItemListItem({
 					required
 					type="text"
 				/>
+				{errors.items?.[index]?.quantity && (
+					<p className="text-sm text-red-500 mt-1">
+						{errors.items?.[index]?.quantity.message}
+					</p>
+				)}
 			</TableCell>
 
 			{/* Unit Price */}
@@ -86,6 +103,11 @@ export default function ItemListItem({
 					required
 					type="text"
 				/>
+				{errors.items?.[index]?.unitPrice && (
+					<p className="text-sm text-red-500 mt-1">
+						{errors.items?.[index]?.unitPrice.message}
+					</p>
+				)}
 			</TableCell>
 
 			{/* Total */}

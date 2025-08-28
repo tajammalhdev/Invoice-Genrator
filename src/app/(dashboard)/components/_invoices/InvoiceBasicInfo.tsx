@@ -165,28 +165,48 @@ export default function InvoiceBasicInfo({
 			{/* Dates and Payment Terms */}
 			<Card className="w-full shadow-none rounded-none col-span-12 xl:col-span-4 h-max">
 				<CardContent className="px-0">
-					<div className="px-5 sm:px-6 py-4 sm:py-3">
-						<div className="flex flex-col gap-2 w-full">
+					<div className="sm:grid sm:gap-10 flex flex-col lg:flex-row px-5 sm:px-6 py-4 sm:py-3 lg:items-center sm:grid-cols-3">
+						<dt className="text-sm flex flex-col">
 							<Label htmlFor="issueDate">Issue Date</Label>
+						</dt>
+						<dd className="mt-3 text-sm sm:mt-0 sm:col-span-2">
 							<input
 								type="date"
 								{...register("issueDate")}
 								defaultValue={today}
 								className="w-full py-2 px-3 rounded-md text-sm disabled:opacity-75 disabled:cursor-not-allowed undefined border border-gray-300"
+								onChange={(e) => {
+									setCustomValue("issueDate", e.target.value);
+								}}
 							/>
-						</div>
+							{errors.issueDate && (
+								<p className="text-sm text-red-500 mt-1">
+									{errors.issueDate.message}
+								</p>
+							)}
+						</dd>
 					</div>
 
-					<div className="px-5 sm:px-6 py-4 sm:py-3">
-						<div className="flex flex-col gap-2 w-full">
+					<div className="sm:grid sm:gap-10 flex flex-col lg:flex-row px-5 sm:px-6 py-4 sm:py-3 lg:items-center sm:grid-cols-3">
+						<dt className="text-sm flex flex-col">
 							<Label htmlFor="dueDate">Due Date</Label>
+						</dt>
+						<dd className="mt-3 text-sm sm:mt-0 sm:col-span-2">
 							<input
 								type="date"
 								{...register("dueDate")}
 								defaultValue={today}
 								className="w-full py-2 px-3 rounded-md text-sm disabled:opacity-75 disabled:cursor-not-allowed undefined border border-gray-300"
+								onChange={(e) => {
+									setCustomValue("dueDate", e.target.value);
+								}}
 							/>
-						</div>
+							{errors.dueDate && (
+								<p className="text-sm text-red-500 mt-1">
+									{errors.dueDate.message}
+								</p>
+							)}
+						</dd>
 					</div>
 
 					<div className="sm:grid sm:gap-10 flex flex-col lg:flex-row px-5 sm:px-6 py-4 sm:py-3 lg:items-center sm:grid-cols-3">
@@ -209,6 +229,11 @@ export default function InvoiceBasicInfo({
 									))}
 								</SelectContent>
 							</Select>
+							{errors.paymentTerm && (
+								<p className="text-sm text-red-500 mt-1">
+									{errors.paymentTerm.message}
+								</p>
+							)}
 						</dd>
 					</div>
 				</CardContent>

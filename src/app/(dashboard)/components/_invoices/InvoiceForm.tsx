@@ -20,6 +20,7 @@ import ItemListItem from "./ItemListItem";
 import InvoiceSummary from "./InvoiceSummary";
 import InvoiceActions from "./InvoiceActions";
 import AddClientModel from "../_clients/AddClientModel";
+import { InvoiceItem } from "@prisma/client";
 export default function InvoiceForm() {
 	const [clients] = useClients();
 	const [companySettings] = useCompanySettings();
@@ -34,20 +35,20 @@ export default function InvoiceForm() {
 		watch,
 		setValue,
 		control,
-	} = useForm<InvoiceDetails>({
+	} = useForm<any>({
 		resolver: zodResolver(InvoiceDetailsSchema),
 		defaultValues: {
 			clientId: "",
 			invoiceNumber: "",
-			issueDate: new Date(),
-			dueDate: new Date(),
+			issueDate: new Date().toISOString().split("T")[0],
+			dueDate: new Date().toISOString().split("T")[0],
 			notes: "",
 			status: "DRAFT",
-			discount: 0,
-			tax: companySettings?.taxRate || 0,
-			subtotal: 0,
-			total: 0,
-			paidTotal: 0,
+			discount: "0",
+			tax: companySettings?.taxRate?.toString() || "0",
+			subtotal: "0",
+			total: "0",
+			paidTotal: "0",
 			currency: companySettings?.currencyCode || "USD",
 			language: "en",
 			paymentTerm: "NET30",
@@ -55,16 +56,17 @@ export default function InvoiceForm() {
 				{
 					name: "",
 					description: "",
-					quantity: 0,
-					unitPrice: 0,
-					total: 0,
+					quantity: "0",
+					unitPrice: "0",
+					total: "0",
 				},
 			],
+			payments: [],
 		},
 		mode: "onChange",
 	});
 
-	const { fields, append, remove } = useFieldArray<InvoiceDetails>({
+	const { fields, append, remove } = useFieldArray<any>({
 		control,
 		name: "items",
 	});
@@ -84,7 +86,7 @@ export default function InvoiceForm() {
 	const discount = watch("discount") || 0;
 	const items = watch("items") || [];
 
-	const subtotal = items.reduce((sum, item) => {
+	const subtotal = items.reduce((sum: number, item: any) => {
 		const itemTotal = Number(item.total) || 0;
 		return sum + itemTotal;
 	}, 0);
@@ -115,13 +117,19 @@ export default function InvoiceForm() {
 	// Calculate final total
 	const total = taxableAmount + taxAmount;
 
+	setCustomValue("subtotal", subtotal.toString());
+	setCustomValue("discount", discountAmount.toString());
+	setCustomValue("tax", tax.toString());
+	setCustomValue("total", total.toString());
+	setCustomValue("paidTotal", total.toString());
+
 	const handleAddNewItemRow = () => {
 		append({
 			name: "",
 			description: "",
-			quantity: 0,
-			unitPrice: 0,
-			total: 0,
+			quantity: "0",
+			unitPrice: "0",
+			total: "0",
 		});
 	};
 
@@ -129,15 +137,22 @@ export default function InvoiceForm() {
 		remove(index);
 	};
 
-	const handleFormSubmit = (data: InvoiceDetails) => {
-		console.log("Invoice submitted:", { data, invoiceItems: items });
+	const handleFormSubmit = (data: any) => {
+		console.log("✅ Form submitted successfully:", {
+			data,
+			invoiceItems: items,
+		});
+	};
+
+	const handleFormError = (errors: any) => {
+		console.error("❌ Form validation errors:", errors);
 	};
 
 	return (
 		<div className="w-full h-full min-h-full px-4 py-6">
 			<InvoiceHeader />
 			<form
-				onSubmit={handleSubmit(handleFormSubmit)}
+				onSubmit={handleSubmit(handleFormSubmit, handleFormError)}
 				className="space-y-6 mt-6">
 				<div className="grid grid-cols-12 gap-4 border-0 rounded-none">
 					<InvoiceBasicInfo
@@ -152,6 +167,7 @@ export default function InvoiceForm() {
 						register={register}
 						setCustomValue={setCustomValue}
 						discount={discount}
+						errors={errors}
 					/>
 				</div>
 

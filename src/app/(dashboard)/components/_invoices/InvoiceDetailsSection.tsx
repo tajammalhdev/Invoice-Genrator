@@ -10,14 +10,16 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { UseFormRegisterReturn } from "react-hook-form";
+import { FieldErrors, UseFormRegisterReturn } from "react-hook-form";
 import { useAtom } from "jotai";
 import { discountTypeAtom } from "@/hooks/invoice";
+import { InvoiceDetails } from "@/lib/zodSchemas";
 
 interface InvoiceDetailsSectionProps {
 	register: (name: any) => UseFormRegisterReturn;
 	setCustomValue: (id: string, value: any) => void;
 	discount: number;
+	errors: FieldErrors<InvoiceDetails>;
 }
 
 const statusOptions = [
@@ -31,6 +33,7 @@ export default function InvoiceDetailsSection({
 	register,
 	setCustomValue,
 	discount,
+	errors,
 }: InvoiceDetailsSectionProps) {
 	const [discountType, setDiscountType] = useAtom(discountTypeAtom);
 
@@ -47,6 +50,11 @@ export default function InvoiceDetailsSection({
 							{...register("invoiceNumber")}
 							className="w-full"
 						/>
+						{errors.invoiceNumber && (
+							<p className="text-sm text-red-500 mt-1">
+								{errors.invoiceNumber.message}
+							</p>
+						)}
 					</dd>
 				</div>
 
@@ -69,6 +77,11 @@ export default function InvoiceDetailsSection({
 								))}
 							</SelectContent>
 						</Select>
+						{errors.status && (
+							<p className="text-sm text-red-500 mt-1">
+								{errors.status.message}
+							</p>
+						)}
 					</dd>
 				</div>
 
@@ -100,7 +113,7 @@ export default function InvoiceDetailsSection({
 									type="number"
 									{...register("discount")}
 									onChange={(e) =>
-										setCustomValue("discount", parseFloat(e.target.value) || 0)
+										setCustomValue("discount", parseInt(e.target.value) || 0)
 									}
 									min={0}
 									max={discountType === "percentage" ? 100 : undefined}
@@ -111,6 +124,11 @@ export default function InvoiceDetailsSection({
 								</span>
 							</div>
 						</div>
+						{errors.discount && (
+							<p className="text-sm text-red-500 mt-1">
+								{errors.discount.message}
+							</p>
+						)}
 					</dd>
 				</div>
 			</CardContent>
