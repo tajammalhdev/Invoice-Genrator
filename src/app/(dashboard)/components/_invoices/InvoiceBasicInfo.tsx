@@ -216,7 +216,6 @@ export default function InvoiceBasicInfo({
 						<dd className="mt-3 text-sm sm:mt-0 sm:col-span-2">
 							<Select
 								defaultValue={PaymentTerm.NET30}
-								{...register("paymentTerm")}
 								onValueChange={(value) => setCustomValue("paymentTerm", value)}>
 								<SelectTrigger className="w-full py-2 px-3 rounded-md text-sm border border-gray-300">
 									<SelectValue placeholder="Select a payment term" />

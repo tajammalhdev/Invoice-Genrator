@@ -1,5 +1,11 @@
 import { InvoiceDetails } from "@/lib/zodSchemas";
-import { FieldErrors, UseFormRegister, UseFormWatch } from "react-hook-form";
+import {
+	FieldErrors,
+	Control,
+	UseFormRegister,
+	UseFormWatch,
+	useWatch,
+} from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,6 +18,7 @@ import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 type ItemListItemProps = {
 	id: string;
 	required: boolean;
+	control: Control<InvoiceDetails>;
 	register: UseFormRegister<InvoiceDetails>;
 	errors: FieldErrors<InvoiceDetails>;
 	watch: UseFormWatch<InvoiceDetails>;
@@ -22,6 +29,7 @@ type ItemListItemProps = {
 };
 export default function ItemListItem({
 	id,
+	control,
 	required,
 	register,
 	errors,
@@ -31,19 +39,15 @@ export default function ItemListItem({
 	index,
 	currency,
 }: ItemListItemProps) {
-	const quantity = watch(`items.${index}.quantity`);
-	const price = watch(`items.${index}.unitPrice`);
-
-	const [total, setTotal] = useState("0");
+	const { quantity = 0, unitPrice = 0 } =
+		useWatch({ control, name: `items.${index}` }) || {};
 
 	useEffect(() => {
-		const numQuantity = parseFloat(quantity.toString());
-		const numPrice = parseFloat(price.toString());
-		const calculatedTotal = numQuantity * numPrice;
-		const value = calculatedTotal.toFixed(2).toString();
-		setTotal(value);
-		setCustomValue(`items.${index}.total`, value.toString());
-	}, [quantity, price, setCustomValue, index]);
+		const total =
+			(parseFloat(quantity.toString()) || 0) *
+			(parseFloat(unitPrice.toString()) || 0);
+		setCustomValue(`items.${index}.total`, total.toFixed(2));
+	}, [quantity, unitPrice, index, setCustomValue]);
 
 	return (
 		<TableRow className="border-b border-gray-200 hover:bg-muted dark:bg-none transition-colors duration-150">
@@ -112,7 +116,7 @@ export default function ItemListItem({
 
 			{/* Total */}
 			<TableCell className="px-4 py-3 text-left font-medium text-gray-900 dark:text-white">
-				{currency} {total}
+				{currency} {watch(`items.${index}.total`)}
 			</TableCell>
 
 			{/* Actions */}

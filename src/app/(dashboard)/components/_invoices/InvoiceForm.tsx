@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray } from "react-hook-form";
@@ -31,10 +31,11 @@ export default function InvoiceForm() {
 	const {
 		register,
 		handleSubmit,
-		formState: { errors },
+		formState: { errors, isSubmitting },
 		watch,
 		setValue,
 		control,
+		reset,
 	} = useForm<any>({
 		resolver: zodResolver(InvoiceDetailsSchema),
 		defaultValues: {
@@ -82,46 +83,44 @@ export default function InvoiceForm() {
 		[setValue],
 	);
 
-	const tax = watch("tax") || companySettings?.taxRate || 0;
-	const discount = watch("discount") || 0;
+	const tax = Number(watch("tax")) || Number(companySettings?.taxRate) || 0;
+	const discount = Number(watch("discount")) || 0;
 	const items = watch("items") || [];
 
-	const subtotal = items.reduce((sum: number, item: any) => {
-		const itemTotal = Number(item.total) || 0;
-		return sum + itemTotal;
-	}, 0);
+	// Watch individual item totals for real-time subtotal updates
+	const itemTotals = items.map((_: any, index: number) =>
+		watch(`items.${index}.total`),
+	);
 
-	// Calculate discount amount based on type
-	let discountAmount = 0;
+	const subtotal = useMemo(() => {
+		return itemTotals.reduce((sum: number, total: any) => {
+			return sum + (Number(total) || 0);
+		}, 0);
+	}, [itemTotals]);
 
+	let calculatedDiscountAmount = 0;
 	if (discountType === "percentage") {
-		// Percentage discount: discount is a percentage of subtotal
-		discountAmount = (subtotal * discount) / 100;
-		// Cap percentage discount to prevent negative total
-		if (discountAmount > subtotal) {
-			discountAmount = subtotal;
+		calculatedDiscountAmount = (subtotal * discount) / 100;
+		if (calculatedDiscountAmount > subtotal) {
+			calculatedDiscountAmount = subtotal;
 		}
 	} else {
-		// Currency discount: discount is a fixed amount
-		discountAmount = discount;
-		// Cap currency discount to prevent negative total
-		if (discountAmount > subtotal) {
-			discountAmount = subtotal;
+		calculatedDiscountAmount = discount;
+		if (calculatedDiscountAmount > subtotal) {
+			calculatedDiscountAmount = subtotal;
 		}
 	}
 
-	// Calculate tax amount (on subtotal after discount)
-	const taxableAmount = Math.max(subtotal - discountAmount, 0);
-	const taxAmount = (taxableAmount * tax) / 100;
+	const taxableAmount = Math.max(subtotal - calculatedDiscountAmount, 0);
+	const calculatedTaxAmount = (taxableAmount * tax) / 100;
 
-	// Calculate final total
-	const total = taxableAmount + taxAmount;
+	const total = taxableAmount + calculatedTaxAmount;
 
-	setCustomValue("subtotal", subtotal.toString());
-	setCustomValue("discount", discountAmount.toString());
-	setCustomValue("tax", tax.toString());
-	setCustomValue("total", total.toString());
-	setCustomValue("paidTotal", total.toString());
+	// Update form values only when calculations change
+	useEffect(() => {
+		setCustomValue("total", Number(total).toFixed(2));
+		setCustomValue("subtotal", Number(subtotal).toFixed(2));
+	}, [total, setCustomValue]);
 
 	const handleAddNewItemRow = () => {
 		append({
@@ -175,6 +174,7 @@ export default function InvoiceForm() {
 					{fields.map((field, index) => (
 						<ItemListItem
 							key={field.id}
+							control={control}
 							id={field.id}
 							required={true}
 							register={register}
@@ -190,13 +190,16 @@ export default function InvoiceForm() {
 
 				<InvoiceSummary
 					subtotal={subtotal}
-					tax={tax}
+					tax={calculatedTaxAmount}
 					total={total}
-					discount={discount}
+					discount={calculatedDiscountAmount}
 					currency={watch("currency") || "USD"}
+					register={register}
+					errors={errors}
+					watch={watch}
 				/>
 
-				<InvoiceActions />
+				<InvoiceActions isSubmitting={isSubmitting} />
 			</form>
 
 			<AddClientModel
