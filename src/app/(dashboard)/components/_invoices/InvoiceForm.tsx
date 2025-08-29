@@ -21,6 +21,7 @@ import InvoiceSummary from "./InvoiceSummary";
 import InvoiceActions from "./InvoiceActions";
 import AddClientModel from "../_clients/AddClientModel";
 import { InvoiceItem } from "@prisma/client";
+import { toast } from "sonner";
 export default function InvoiceForm() {
 	const [clients] = useClients();
 	const [companySettings] = useCompanySettings();
@@ -136,11 +137,30 @@ export default function InvoiceForm() {
 		remove(index);
 	};
 
-	const handleFormSubmit = (data: any) => {
+	const handleFormSubmit = async (data: InvoiceDetails) => {
 		console.log("✅ Form submitted successfully:", {
 			data,
 			invoiceItems: items,
 		});
+		try {
+			const response = await fetch("/api/invoices", {
+				headers: {
+					"Content-Type": "application/json",
+				},
+				method: "POST",
+				body: JSON.stringify(data),
+			});
+			const json = await response.json();
+			if (response.ok) {
+				const successMessage = json.message || "Invoice created successfully";
+				toast.success(successMessage);
+			} else {
+				const errorMessage = json.error || "Failed to create invoice";
+				toast.error(errorMessage);
+			}
+		} catch (error) {
+			console.error(error);
+		}
 	};
 
 	const handleFormError = (errors: any) => {

@@ -46,7 +46,7 @@ export default function ItemListItem({
 		const total =
 			(parseFloat(quantity.toString()) || 0) *
 			(parseFloat(unitPrice.toString()) || 0);
-		setCustomValue(`items.${index}.total`, total.toFixed(2));
+		setCustomValue(`items.${index}.total`, total.toFixed(2).toString());
 	}, [quantity, unitPrice, index, setCustomValue]);
 
 	return (

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { InvoiceDetailsSchema } from "@/lib/zodSchemas";
+import { InvoiceItem } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -11,13 +11,17 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
+		const userId = session.user.id;
+
 		// Parse and validate the request body
 		const body = await request.json();
-		const validatedData = InvoiceDetailsSchema.parse(body);
+
+		// Use the raw body data directly (no validation needed since frontend handles it)
+		const invoiceData = body;
 
 		// Get user's company settings for invoice number generation
 		const userSettings = await prisma.setting.findUnique({
-			where: { userId: session.user.id },
+			where: { userId },
 		});
 
 		if (!userSettings) {
@@ -37,24 +41,24 @@ export async function POST(request: NextRequest) {
 			// Create the invoice
 			const invoice = await tx.invoice.create({
 				data: {
-					userId: session.user.id,
-					clientId: validatedData.clientId,
+					userId,
+					clientId: invoiceData.clientId,
 					number: invoiceNumber,
-					issueDate: validatedData.issueDate,
-					dueDate: validatedData.dueDate,
-					notes: validatedData.notes || "",
-					status: validatedData.status as any,
-					discount: validatedData.discount,
-					subtotal: validatedData.subtotal,
-					tax: validatedData.tax,
-					total: validatedData.total,
-					paymentTerm: validatedData.paymentTerm as any,
+					issueDate: invoiceData.issueDate,
+					dueDate: invoiceData.dueDate,
+					notes: invoiceData.notes || "",
+					status: invoiceData.status as any,
+					discount: invoiceData.discount || 0,
+					subtotal: invoiceData.subtotal,
+					tax: invoiceData.tax,
+					total: invoiceData.total,
+					paymentTerm: invoiceData.paymentTerm as any,
 				},
 			});
 
 			// Create invoice items
 			const invoiceItems = await Promise.all(
-				validatedData.items.map((item) =>
+				invoiceData.items.map((item: InvoiceItem) =>
 					tx.invoiceItem.create({
 						data: {
 							invoiceId: invoice.id,
@@ -70,7 +74,7 @@ export async function POST(request: NextRequest) {
 
 			// Update the next invoice number
 			await tx.setting.update({
-				where: { userId: session.user.id },
+				where: { userId },
 				data: { nextInvoiceNumber: userSettings.nextInvoiceNumber + 1 },
 			});
 
