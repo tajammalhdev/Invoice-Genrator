@@ -22,10 +22,12 @@ import InvoiceActions from "./InvoiceActions";
 import AddClientModel from "../_clients/AddClientModel";
 import { InvoiceItem } from "@prisma/client";
 import { toast } from "sonner";
+import { useInvoiceContext } from "@/hooks/invoice/InvoiceContext";
+
 export default function InvoiceForm() {
 	const [clients] = useClients();
 	const [companySettings] = useCompanySettings();
-	const [isLoadingClients] = useIsLoadingClients();
+	const { loading } = useInvoiceContext();
 	const [discountType] = useAtom(discountTypeAtom);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -176,7 +178,7 @@ export default function InvoiceForm() {
 				<div className="grid grid-cols-12 gap-4 border-0 rounded-none">
 					<InvoiceBasicInfo
 						clients={clients}
-						isLoadingClients={isLoadingClients}
+						isLoadingClients={loading.clients}
 						register={register}
 						errors={errors}
 						setCustomValue={setCustomValue}

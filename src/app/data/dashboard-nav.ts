@@ -10,6 +10,7 @@ import {
 	IconMoneybag,
 	IconReceipt,
 	IconInvoice,
+	IconPlus,
 } from "@tabler/icons-react";
 
 // Route configuration type
@@ -18,6 +19,11 @@ export interface RouteConfig {
 	title: string;
 	breadcrumb?: string;
 	icon?: any;
+	items?: {
+		title: string;
+		url: string;
+		icon?: any;
+	}[];
 }
 
 // Centralized route configuration
@@ -110,6 +116,13 @@ export const data = {
 			title: "Invoices",
 			url: "/invoices",
 			icon: IconInvoice,
+			items: [
+				{
+					title: "",
+					url: "/invoices/create",
+					icon: IconPlus,
+				},
+			],
 		},
 		{
 			title: "Clients",

@@ -1,35 +1,48 @@
 "use client";
 
-import React, { createContext, useContext, useEffect } from "react";
-import { atom, useAtom, useSetAtom } from "jotai";
+import React, {
+	createContext,
+	useContext,
+	useEffect,
+	useCallback,
+} from "react";
+import { atom, useAtom } from "jotai";
+import { Invoice, Setting, Client } from "@prisma/client";
 
-interface Client {
-	id: string;
-	name: string;
-	email: string;
-	company?: string;
-}
+// Simplified interfaces
 
-interface CompanySettings {
-	taxRate: number;
-	currencyCode: string;
-	invoicePrefix: string;
-}
-
-// Atoms
+// Consolidated atoms
 const clientsAtom = atom<Client[]>([]);
-const companySettingsAtom = atom<CompanySettings | null>(null);
-const isLoadingClientsAtom = atom(false);
-const isLoadingSettingsAtom = atom(false);
+const companySettingsAtom = atom<Setting | null>(null);
+const invoicesAtom = atom<Invoice[]>([]);
+const loadingAtom = atom({
+	clients: false,
+	settings: false,
+	invoices: false,
+});
 const discountTypeAtom = atom<string>("percentage");
 
 interface InvoiceContextType {
+	// Data
 	clients: Client[];
-	companySettings: CompanySettings | null;
-	isLoadingClients: boolean;
-	isLoadingSettings: boolean;
-	fetchClients: () => Promise<void>;
-	fetchCompanySettings: () => Promise<void>;
+	companySettings: Setting | null;
+	invoices: Invoice[];
+
+	// Loading states
+	loading: {
+		clients: boolean;
+		settings: boolean;
+		invoices: boolean;
+	};
+
+	// Actions
+	fetchData: () => Promise<void>;
+	refreshInvoices: () => Promise<void>;
+
+	// Queries
+	getInvoiceById: (id: string) => Invoice | undefined;
+	getInvoicesByStatus: (status: string) => Invoice[];
+	getInvoicesByClient: (clientId: string) => Invoice[];
 }
 
 const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
@@ -37,55 +50,95 @@ const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
 export function InvoiceProvider({ children }: { children: React.ReactNode }) {
 	const [clients, setClients] = useAtom(clientsAtom);
 	const [companySettings, setCompanySettings] = useAtom(companySettingsAtom);
-	const [isLoadingClients, setIsLoadingClients] = useAtom(isLoadingClientsAtom);
-	const [isLoadingSettings, setIsLoadingSettings] = useAtom(
-		isLoadingSettingsAtom,
+	const [invoices, setInvoices] = useAtom(invoicesAtom);
+	const [loading, setLoading] = useAtom(loadingAtom);
+
+	// Generic fetch function to reduce duplication
+	const fetchData = useCallback(
+		async (
+			endpoint: string,
+			setter: (data: any) => void,
+			key: keyof typeof loading,
+		) => {
+			setLoading((prev) => ({ ...prev, [key]: true }));
+			try {
+				const response = await fetch(endpoint);
+				if (response.ok) {
+					const data = await response.json();
+					// Handle different response structures
+					const finalData = data.clients || data;
+					setter(finalData);
+				}
+			} catch (error) {
+				console.error(`Failed to fetch ${key}:`, error);
+			} finally {
+				setLoading((prev) => ({ ...prev, [key]: false }));
+			}
+		},
+		[setLoading],
 	);
 
-	const fetchClients = async () => {
-		setIsLoadingClients(true);
-		try {
-			const response = await fetch("/api/clients");
-			if (response.ok) {
-				const data = await response.json();
-				setClients(data.clients || []);
-			}
-		} catch (error) {
-			console.error("Failed to fetch clients:", error);
-		} finally {
-			setIsLoadingClients(false);
-		}
-	};
+	// Specific fetch functions using the generic one
+	const fetchClients = useCallback(
+		() => fetchData("/api/clients", setClients, "clients"),
+		[fetchData],
+	);
 
-	const fetchCompanySettings = async () => {
-		setIsLoadingSettings(true);
-		try {
-			const response = await fetch("/api/settings");
-			if (response.ok) {
-				const data = await response.json();
-				setCompanySettings(data);
-			}
-		} catch (error) {
-			console.error("Failed to fetch settings:", error);
-		} finally {
-			setIsLoadingSettings(false);
-		}
-	};
+	const fetchCompanySettings = useCallback(
+		() => fetchData("/api/settings", setCompanySettings, "settings"),
+		[fetchData],
+	);
 
+	const fetchInvoices = useCallback(
+		() => fetchData("/api/invoices", setInvoices, "invoices"),
+		[fetchData],
+	);
+
+	// Consolidated fetch all data
+	const fetchAllData = useCallback(async () => {
+		await Promise.all([
+			fetchClients(),
+			fetchCompanySettings(),
+			fetchInvoices(),
+		]);
+	}, [fetchClients, fetchCompanySettings, fetchInvoices]);
+
+	// Convenience functions
+	const refreshInvoices = useCallback(() => fetchInvoices(), [fetchInvoices]);
+
+	const getInvoiceById = useCallback(
+		(id: string) => invoices.find((invoice) => invoice.id === id),
+		[invoices],
+	);
+
+	const getInvoicesByStatus = useCallback(
+		(status: string) => invoices.filter((invoice) => invoice.status === status),
+		[invoices],
+	);
+
+	const getInvoicesByClient = useCallback(
+		(clientId: string) =>
+			invoices.filter((invoice) => invoice.clientId === clientId),
+		[invoices],
+	);
+
+	// Initialize data on mount
 	useEffect(() => {
-		fetchClients();
-		fetchCompanySettings();
-	}, []);
+		fetchAllData();
+	}, [fetchAllData]);
 
 	return (
 		<InvoiceContext.Provider
 			value={{
 				clients,
 				companySettings,
-				isLoadingClients,
-				isLoadingSettings,
-				fetchClients,
-				fetchCompanySettings,
+				invoices,
+				loading,
+				fetchData: fetchAllData,
+				refreshInvoices,
+				getInvoiceById,
+				getInvoicesByStatus,
+				getInvoicesByClient,
 			}}>
 			{children}
 		</InvoiceContext.Provider>
@@ -100,7 +153,7 @@ export function useInvoiceContext() {
 	return context;
 }
 
-// Direct atom hooks for more granular control
+// Simplified direct hooks
 export function useClients() {
 	return useAtom(clientsAtom);
 }
@@ -109,12 +162,12 @@ export function useCompanySettings() {
 	return useAtom(companySettingsAtom);
 }
 
-export function useIsLoadingClients() {
-	return useAtom(isLoadingClientsAtom);
+export function useInvoices() {
+	return useAtom(invoicesAtom);
 }
 
-export function useIsLoadingSettings() {
-	return useAtom(isLoadingSettingsAtom);
+export function useLoading() {
+	return useAtom(loadingAtom);
 }
 
 export { discountTypeAtom };

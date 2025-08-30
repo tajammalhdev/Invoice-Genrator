@@ -6,8 +6,8 @@ import Link from "next/link";
 
 export default function InvoiceHeader() {
 	return (
-		<Card className="w-full shadow-none rounded-none border-0">
-			<CardContent className="px-5 sm:px-6 py-4 sm:py-3">
+		<Card className="w-full shadow-none rounded-none border-0 bg-accent">
+			<CardContent className="px-5 sm:px-6 py-4 sm:py-3 ">
 				<nav className="flex items-center space-x-1 text-sm text-muted-foreground">
 					<Link
 						href="/dashboard"

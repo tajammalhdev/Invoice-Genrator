@@ -8,32 +8,30 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Table, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TableBody } from "@/components/ui/table";
-import { TableCell } from "@/components/ui/table";
-import { Plus, Search } from "lucide-react";
+import { Home, ChevronRight, Plus, Search, FileText } from "lucide-react";
 import Link from "next/link";
+import InvoicePage from "../components/_invoices/InvoicePage";
 
 export default function Invoice() {
 	return (
-		<div className="w-full h-full min-h-[calc(100vh-10rem)] px-4 py-6">
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
-					<p className="text-muted-foreground">
-						Manage your invoices and track payments
-					</p>
-				</div>
-				<Button className="flex items-center gap-2" asChild>
-					<Link href="/invoices/create">
-						<Plus className="h-4 w-4" />
-						Create Invoice
-					</Link>
-				</Button>
-			</div>
+		<div className="w-full h-full min-h-[calc(100vh-10rem)] px-4 py-6 ">
+			<Card className="w-full shadow-none rounded-none border-0 bg-accent">
+				<CardContent className="px-5 sm:px-6 py-4 sm:py-3">
+					<nav className="flex items-center space-x-1 text-sm text-muted-foreground">
+						<Link
+							href="/dashboard"
+							className="flex items-center hover:text-foreground transition-colors">
+							<Home className="h-4 w-4 mr-1" />
+							Dashboard
+						</Link>
+						<ChevronRight className="h-4 w-4" />
+						<span className="flex items-center text-foreground">Invoices</span>
+					</nav>
+				</CardContent>
+			</Card>
 			{/* Filters and Search */}
-			<Card className="mt-5 shadow-none">
-				<CardContent className="p-4">
+			<Card className="mt-5 shadow-none rounded-none">
+				<CardContent className="p-4 ">
 					<div className="flex flex-col sm:flex-row gap-4">
 						<div className="relative flex-1">
 							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -57,38 +55,7 @@ export default function Invoice() {
 					</div>
 				</CardContent>
 			</Card>
-
-			{/* Invoices Table */}
-			<Card className="mt-5 shadow-none">
-				<CardHeader>
-					<CardTitle>All Invoices</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Invoice #</TableHead>
-								<TableHead>Client</TableHead>
-								<TableHead>Issue Date</TableHead>
-								<TableHead>Due Date</TableHead>
-								<TableHead>Status</TableHead>
-								<TableHead>Total</TableHead>
-								<TableHead>Paid</TableHead>
-								<TableHead className="text-right">Actions</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							<TableRow>
-								<TableCell
-									colSpan={8}
-									className="text-center py-8 text-muted-foreground">
-									No invoices found
-								</TableCell>
-							</TableRow>
-						</TableBody>
-					</Table>
-				</CardContent>
-			</Card>
+			<InvoicePage />
 		</div>
 	);
 }

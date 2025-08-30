@@ -8,15 +8,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 	providers: [
 		Nodemailer({
-			server: process.env.EMAIL_SERVER,
-			from: process.env.EMAIL_FROM,
+			server: {
+				host: process.env.SMTP_HOST!,
+				port: parseInt(process.env.SMTP_PORT || "587"),
+				auth: {
+					user: process.env.SMTP_USER!,
+					pass: process.env.SMTP_PASS!,
+				},
+				secure: process.env.SMTP_SECURE === "true",
+			},
+			from: process.env.SMTP_FROM!,
 		}),
 	],
+
 	events: {
 		async signIn({ user }) {
 			console.log(user);
 		},
 	},
+
 	pages: {
 		verifyRequest: "/verify-email",
 		signIn: "/login",

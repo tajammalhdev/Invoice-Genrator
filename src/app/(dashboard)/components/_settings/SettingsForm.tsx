@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import Loading from "@/app/components/Loading";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useInvoiceContext } from "@/hooks/invoice/InvoiceContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Tab = {
 	name: string;
@@ -24,6 +26,7 @@ type Tab = {
 };
 
 export default function SettingsForm() {
+	const { companySettings, loading: contextLoading } = useInvoiceContext();
 	const methods = useForm<Settings>({
 		resolver: zodResolver(SettingsSchema),
 		defaultValues: {
@@ -43,7 +46,6 @@ export default function SettingsForm() {
 			logoUrl: "",
 		},
 	});
-	const [loading, setLoading] = useState(false);
 	const {
 		handleSubmit,
 		setValue,
@@ -60,43 +62,25 @@ export default function SettingsForm() {
 			?.fields.filter((field) => errors[field as keyof typeof errors]).length;
 	};
 
-	const fetchData = async () => {
-		//Set loading to true
-		setLoading(true);
-		try {
-			const response = await fetch("/api/settings", { cache: "no-store" });
-			if (response.status === 401) {
-				redirect("/login");
-			}
-			const data: Settings = await response.json();
-			if (response.status === 200) {
-				const record = data as Record<string, any>;
-				setValue("companyName", record.companyName ?? "");
-				setValue("companyEmail", record.companyEmail ?? "");
-				setValue("companyPhone", record.companyPhone ?? "");
-				setValue("addressLine1", record.addressLine1 ?? "");
-				setValue("addressLine2", record.addressLine2 ?? "");
-				setValue("city", record.city ?? "");
-				setValue("state", record.state ?? "");
-				setValue("country", record.country ?? "");
-				setValue("currencyCode", record.currencyCode ?? "USD");
-				setValue("dateFormat", record.dateFormat ?? "MM/DD/YYYY");
-				setValue("taxRate", record.taxRate ?? 0);
-				setValue("invoicePrefix", record.invoicePrefix ?? "INV");
-				setValue("nextInvoiceNumber", record.nextInvoiceNumber ?? 1);
-				setValue("logoUrl", record.logoUrl ?? "");
-			}
-		} catch (error) {
-			console.error(error);
-		} finally {
-			//Set loading to false
-			setLoading(false);
-		}
-	};
-
+	// Use companySettings from context to populate form
 	useEffect(() => {
-		fetchData();
-	}, []); // Empty dependency array since fetchData doesn't depend on any props/state
+		if (companySettings) {
+			setValue("companyName", companySettings.companyName ?? "");
+			setValue("companyEmail", companySettings.companyEmail ?? "");
+			setValue("companyPhone", companySettings.companyPhone ?? "");
+			setValue("addressLine1", companySettings.addressLine1 ?? "");
+			setValue("addressLine2", companySettings.addressLine2 ?? "");
+			setValue("city", companySettings.city ?? "");
+			setValue("state", companySettings.state ?? "");
+			setValue("country", companySettings.country ?? "");
+			setValue("currencyCode", companySettings.currencyCode ?? "USD");
+			setValue("dateFormat", companySettings.dateFormat ?? "MM/DD/YYYY");
+			setValue("taxRate", companySettings.taxRate ?? 0);
+			setValue("invoicePrefix", companySettings.invoicePrefix ?? "INV");
+			setValue("nextInvoiceNumber", companySettings.nextInvoiceNumber ?? 1);
+			setValue("logoUrl", companySettings.logoUrl ?? "");
+		}
+	}, [companySettings, setValue]);
 
 	const onSubmit = handleSubmit(async (data) => {
 		try {
@@ -161,8 +145,8 @@ export default function SettingsForm() {
 
 	return (
 		<>
-			{loading && <Loading />}
-			{!loading && (
+			{contextLoading.settings && <Loading />}
+			{!contextLoading.settings && (
 				<Tabs
 					orientation="vertical"
 					defaultValue={tabs[0].value}
@@ -196,28 +180,50 @@ export default function SettingsForm() {
 						{/* Content area */}
 						<FormProvider {...methods}>
 							<form noValidate className="w-full h-full" onSubmit={onSubmit}>
-								<div className="w-full border-b bg-muted/30 px-6 py-4 flex justify-end">
+								<div className="w-full border-b bg-muted/30 px-6 py-4 flex justify-between items-center">
+									<div className="flex items-center gap-2">
+										{contextLoading.settings && (
+											<>
+												<Loader2 className="h-4 w-4 animate-spin" />
+												<span className="text-sm text-muted-foreground">
+													Loading settings...
+												</span>
+											</>
+										)}
+									</div>
 									<Button
 										type="submit"
 										className="w-auto flex items-center gap-2"
-										disabled={isSubmitting}>
+										disabled={isSubmitting || contextLoading.settings}>
 										{isSubmitting ? (
 											<Loader2 className="h-4 w-4 animate-spin" />
 										) : (
 											<SaveIcon className="h-4 w-4" />
 										)}
-										Save Settings
+										{isSubmitting ? "Saving..." : "Save Settings"}
 									</Button>
 								</div>
 								<div className="w-full h-full flex flex-col gap-4 p-6">
-									{tabs.map((tab) => (
-										<TabsContent
-											key={tab.value}
-											value={tab.value}
-											className=" h-full w-full">
-											{tab.component}
-										</TabsContent>
-									))}
+									{contextLoading.settings ? (
+										// Skeleton loading for form fields
+										<div className="space-y-6">
+											{Array.from({ length: 4 }).map((_, index) => (
+												<div key={index} className="space-y-3">
+													<Skeleton className="h-4 w-24" />
+													<Skeleton className="h-10 w-full" />
+												</div>
+											))}
+										</div>
+									) : (
+										tabs.map((tab) => (
+											<TabsContent
+												key={tab.value}
+												value={tab.value}
+												className=" h-full w-full">
+												{tab.component}
+											</TabsContent>
+										))
+									)}
 								</div>
 							</form>
 						</FormProvider>

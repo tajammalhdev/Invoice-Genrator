@@ -3,6 +3,7 @@ import { AppSidebar } from "./components/_dashboard/AppSideabr";
 import { SiteHeader } from "./components/_dashboard/SiteHeader";
 import { Suspense } from "react";
 import { reqSession } from "../../lib/hooks";
+import { InvoiceProvider } from "@/hooks/invoice";
 
 export default async function DashboardLayout({
 	children,
@@ -30,7 +31,7 @@ export default async function DashboardLayout({
 										Loading...
 									</div>
 								}>
-								{children}
+								<InvoiceProvider>{children}</InvoiceProvider>
 							</Suspense>
 						</div>
 					</div>
