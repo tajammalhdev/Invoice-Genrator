@@ -7,37 +7,42 @@ import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { Settings } from "@/lib/zodSchemas";
 import FormInput from "../_shared/FormInput";
+import { Input } from "@/components/ui/input";
+import Image from "next/image";
+import { imabebase64 } from "@/lib/utils";
 
 export default function BasicInfo() {
 	const {
 		register,
 		watch,
 		setValue,
+		getValues,
 		formState: { errors },
 	} = useFormContext<Settings>();
 
+	const [logo, setLogo] = useState<string>();
 	const watchedLogoUrl = watch("logoUrl");
-	const [logoUrl, setLogoUrl] = useState<string>("");
-
-	// Update logoUrl when form value changes
 	useEffect(() => {
 		if (watchedLogoUrl) {
-			setLogoUrl(watchedLogoUrl);
+			setLogo(watchedLogoUrl);
 		}
 	}, [watchedLogoUrl]);
+	// Update logo when form value changes (from fetched data)
+	// Handle logo selection (just set state, no upload)
+	const handleOnChangeLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		// Create a preview URL for display
+		const files = e.target.files;
 
-	// Update logoUrl when form value changes
-	const handleLogoUpload = (url: string) => {
-		setLogoUrl(url);
-		setValue("logoUrl", url);
+		if (!files || files.length < 0) return;
+
+		const file = files[0];
+
+		//image to base64
+		const image = await imabebase64(file);
+
+		setLogo(image);
+		setValue("logoUrl", image);
 	};
-
-	// Initialize logoUrl from form data on mount
-	useEffect(() => {
-		if (watchedLogoUrl && !logoUrl) {
-			setLogoUrl(watchedLogoUrl);
-		}
-	}, [watchedLogoUrl, logoUrl]);
 
 	return (
 		<>
@@ -78,114 +83,36 @@ export default function BasicInfo() {
 					</div>
 					<div className="space-y-2 md:col-span-2">
 						<Label>Company Logo</Label>
-						<LogoUploader onUploaded={handleLogoUpload} currentUrl={logoUrl} />
+						<Input
+							type="file"
+							className="max-w-sm w-full cursor-pointer "
+							onChange={handleOnChangeLogo}
+							required
+							accept="image/*"
+						/>
+						{errors.logoUrl && (
+							<p className="text-sm text-destructive">
+								{errors.logoUrl.message}
+							</p>
+						)}
+						<div className="w-full max-w-xs">
+							{logo ? (
+								<Image
+									className="aspect-video h-20 border-2 border-dotted max-h-20 object-scale-down"
+									src={logo}
+									width={250}
+									height={96}
+									alt="Invoice logo"
+								/>
+							) : (
+								<div className="aspect-video h-20 border-2 border-dotted flex justify-center items-center rounded-lg">
+									<p className="text-center text-muted-foreground">No Data</p>
+								</div>
+							)}
+						</div>
 					</div>
 				</CardContent>
 			</Card>
 		</>
-	);
-}
-
-function LogoUploader({
-	onUploaded,
-	currentUrl,
-}: {
-	onUploaded: (url: string) => void;
-	currentUrl: string;
-}) {
-	const [dragOver, setDragOver] = useState(false);
-	const [uploading, setUploading] = useState(false);
-
-	async function upload(file: File) {
-		setUploading(true);
-		try {
-			const formData = new FormData();
-			formData.append("file", file);
-			const res = await fetch("/api/uploads", {
-				method: "POST",
-				body: formData,
-			});
-
-			if (!res.ok) {
-				const err = await res.json().catch(() => ({}));
-				throw new Error(err?.error ?? "Upload failed");
-			}
-
-			const data = await res.json();
-			onUploaded(data.url);
-			toast.success("Logo uploaded successfully");
-		} catch (e) {
-			const message = e instanceof Error ? e.message : "Upload failed";
-			toast.error(message);
-		} finally {
-			setUploading(false);
-			setDragOver(false);
-		}
-	}
-
-	function onDrop(e: React.DragEvent<HTMLDivElement>) {
-		e.preventDefault();
-		e.stopPropagation();
-		const file = e.dataTransfer.files?.[0];
-		if (file) upload(file);
-	}
-
-	function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-		e.preventDefault();
-		e.stopPropagation();
-		const file = e.target.files?.[0];
-		if (file) upload(file);
-	}
-
-	return (
-		<div
-			onDragOver={(e) => {
-				e.preventDefault();
-				e.stopPropagation();
-				setDragOver(true);
-			}}
-			onDragLeave={(e) => {
-				e.preventDefault();
-				e.stopPropagation();
-				setDragOver(false);
-			}}
-			onDrop={onDrop}
-			className={`border rounded-md p-4 flex items-center justify-between gap-4 transition-colors ${
-				dragOver ? "border-ring bg-accent/30" : "border-input"
-			}`}>
-			<div className="flex items-center gap-3">
-				<div className="size-12 grid place-items-center rounded bg-muted/50 border">
-					{currentUrl ? (
-						// eslint-disable-next-line @next/next/no-img-element
-						<img
-							src={currentUrl}
-							alt="Logo"
-							className="max-h-12 max-w-12 object-contain"
-						/>
-					) : (
-						<ImageIcon className="size-6 text-muted-foreground" />
-					)}
-				</div>
-				<div className="space-y-1">
-					<div className="text-sm font-medium">Drag and drop your logo</div>
-					<div className="text-xs text-muted-foreground">
-						PNG, JPG, WEBP, GIF, or SVG up to 5MB
-					</div>
-				</div>
-			</div>
-			<div className="flex items-center gap-2">
-				<label className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md border cursor-pointer hover:bg-accent">
-					<UploadCloud className="size-4" />
-					<span>{uploading ? "Uploading..." : "Choose file"}</span>
-					<input
-						type="file"
-						accept="image/*"
-						className="hidden"
-						onChange={onChange}
-						disabled={uploading}
-					/>
-				</label>
-			</div>
-		</div>
 	);
 }

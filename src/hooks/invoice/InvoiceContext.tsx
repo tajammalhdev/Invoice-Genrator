@@ -5,24 +5,16 @@ import React, {
 	useContext,
 	useEffect,
 	useCallback,
+	useMemo,
 } from "react";
 import { atom, useAtom } from "jotai";
-import { Invoice, Setting, Client } from "@prisma/client";
+import { Invoice, Setting, Client, InvoiceStatus } from "@prisma/client";
 
-// Simplified interfaces
+// ============================================================================
+// TYPES & INTERFACES
+// ============================================================================
 
-// Consolidated atoms
-const clientsAtom = atom<Client[]>([]);
-const companySettingsAtom = atom<Setting | null>(null);
-const invoicesAtom = atom<Invoice[]>([]);
-const loadingAtom = atom({
-	clients: false,
-	settings: false,
-	invoices: false,
-});
-const discountTypeAtom = atom<string>("percentage");
-
-interface InvoiceContextType {
+export interface InvoiceContextState {
 	// Data
 	clients: Client[];
 	companySettings: Setting | null;
@@ -35,15 +27,117 @@ interface InvoiceContextType {
 		invoices: boolean;
 	};
 
-	// Actions
+	// Editing states
+	isEditing: boolean;
+	invoiceToEdit: Invoice | null;
+}
+
+export interface InvoiceContextActions {
+	// Data fetching
 	fetchData: () => Promise<void>;
+	refreshClients: () => Promise<void>;
+	refreshSettings: () => Promise<void>;
 	refreshInvoices: () => Promise<void>;
 
 	// Queries
 	getInvoiceById: (id: string) => Invoice | undefined;
-	getInvoicesByStatus: (status: string) => Invoice[];
+	getInvoicesByStatus: (status: InvoiceStatus) => Invoice[];
 	getInvoicesByClient: (clientId: string) => Invoice[];
+	getInvoicesByDateRange: (startDate: Date, endDate: Date) => Invoice[];
+
+	// Statistics
+	getInvoiceStats: () => {
+		total: number;
+		draft: number;
+		pending: number;
+		paid: number;
+		overdue: number;
+		totalAmount: number;
+		paidAmount: number;
+		overdueAmount: number;
+	};
 }
+
+export interface InvoiceContextType
+	extends InvoiceContextState,
+		InvoiceContextActions {}
+
+export interface InvoiceActions {
+	isEditing: boolean;
+	invoiceToEdit: Invoice | null;
+	setInvoiceToEdit: (invoice: Invoice | null) => void;
+	clearEditing: () => void;
+}
+
+// ============================================================================
+// ATOMS
+// ============================================================================
+
+const clientsAtom = atom<Client[]>([]);
+const companySettingsAtom = atom<Setting | null>(null);
+const invoicesAtom = atom<Invoice[]>([]);
+const loadingAtom = atom({
+	clients: false,
+	settings: false,
+	invoices: false,
+});
+const discountTypeAtom = atom<string>("percentage");
+
+// Editing state atoms
+const isEditingAtom = atom<boolean>(false);
+const invoiceToEditAtom = atom<Invoice | null>(null);
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+const calculateInvoiceStats = (invoices: Invoice[]) => {
+	const now = new Date();
+
+	return invoices.reduce(
+		(acc, invoice) => {
+			acc.total++;
+			acc.totalAmount += invoice.total;
+
+			switch (invoice.status) {
+				case "DRAFT":
+					acc.draft++;
+					break;
+				case "PENDING":
+					acc.pending++;
+					if (invoice.dueDate < now) {
+						acc.overdue++;
+						acc.overdueAmount += invoice.total;
+					}
+					break;
+				case "PAID":
+					acc.paid++;
+					acc.paidAmount += invoice.paidTotal;
+					break;
+				case "OVERDUE":
+					acc.overdue++;
+					acc.overdueAmount += invoice.total;
+					break;
+			}
+
+			return acc;
+		},
+		{
+			total: 0,
+			draft: 0,
+			pending: 0,
+			paid: 0,
+			overdue: 0,
+			totalAmount: 0,
+			paidAmount: 0,
+			overdueAmount: 0,
+		},
+	);
+};
+
+// ============================================================================
+// CONTEXT
+// ============================================================================
 
 const InvoiceContext = createContext<InvoiceContextType | undefined>(undefined);
 
@@ -52,8 +146,13 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
 	const [companySettings, setCompanySettings] = useAtom(companySettingsAtom);
 	const [invoices, setInvoices] = useAtom(invoicesAtom);
 	const [loading, setLoading] = useAtom(loadingAtom);
+	const [isEditing, setIsEditing] = useAtom(isEditingAtom);
+	const [invoiceToEdit, setInvoiceToEdit] = useAtom(invoiceToEditAtom);
 
-	// Generic fetch function to reduce duplication
+	// ============================================================================
+	// DATA FETCHING
+	// ============================================================================
+
 	const fetchData = useCallback(
 		async (
 			endpoint: string,
@@ -61,16 +160,21 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
 			key: keyof typeof loading,
 		) => {
 			setLoading((prev) => ({ ...prev, [key]: true }));
+
 			try {
 				const response = await fetch(endpoint);
-				if (response.ok) {
-					const data = await response.json();
-					// Handle different response structures
-					const finalData = data.clients || data;
-					setter(finalData);
+
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
 				}
+
+				const data = await response.json();
+				const finalData = key === "settings" ? data : data.clients || data;
+				setter(finalData);
 			} catch (error) {
 				console.error(`Failed to fetch ${key}:`, error);
+				// In a production app, you might want to show a toast notification here
+				throw error;
 			} finally {
 				setLoading((prev) => ({ ...prev, [key]: false }));
 			}
@@ -78,33 +182,36 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
 		[setLoading],
 	);
 
-	// Specific fetch functions using the generic one
 	const fetchClients = useCallback(
 		() => fetchData("/api/clients", setClients, "clients"),
-		[fetchData],
+		[fetchData, setClients],
 	);
 
 	const fetchCompanySettings = useCallback(
 		() => fetchData("/api/settings", setCompanySettings, "settings"),
-		[fetchData],
+		[fetchData, setCompanySettings],
 	);
 
 	const fetchInvoices = useCallback(
 		() => fetchData("/api/invoices", setInvoices, "invoices"),
-		[fetchData],
+		[fetchData, setInvoices],
 	);
 
-	// Consolidated fetch all data
 	const fetchAllData = useCallback(async () => {
-		await Promise.all([
-			fetchClients(),
-			fetchCompanySettings(),
-			fetchInvoices(),
-		]);
+		try {
+			await Promise.all([
+				fetchClients(),
+				fetchCompanySettings(),
+				fetchInvoices(),
+			]);
+		} catch (error) {
+			console.error("Failed to fetch initial data:", error);
+		}
 	}, [fetchClients, fetchCompanySettings, fetchInvoices]);
 
-	// Convenience functions
-	const refreshInvoices = useCallback(() => fetchInvoices(), [fetchInvoices]);
+	// ============================================================================
+	// QUERIES
+	// ============================================================================
 
 	const getInvoiceById = useCallback(
 		(id: string) => invoices.find((invoice) => invoice.id === id),
@@ -112,7 +219,8 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
 	);
 
 	const getInvoicesByStatus = useCallback(
-		(status: string) => invoices.filter((invoice) => invoice.status === status),
+		(status: InvoiceStatus) =>
+			invoices.filter((invoice) => invoice.status === status),
 		[invoices],
 	);
 
@@ -122,30 +230,95 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
 		[invoices],
 	);
 
-	// Initialize data on mount
+	const getInvoicesByDateRange = useCallback(
+		(startDate: Date, endDate: Date) =>
+			invoices.filter(
+				(invoice) =>
+					invoice.issueDate >= startDate && invoice.issueDate <= endDate,
+			),
+		[invoices],
+	);
+
+	// ============================================================================
+	// STATISTICS
+	// ============================================================================
+
+	const getInvoiceStats = useCallback(() => {
+		return calculateInvoiceStats(invoices);
+	}, [invoices]);
+
+	// ============================================================================
+	// MEMOIZED VALUES
+	// ============================================================================
+
+	const contextValue = useMemo<InvoiceContextType>(
+		() => ({
+			// State
+			clients,
+			companySettings,
+			invoices,
+			loading,
+			isEditing,
+			invoiceToEdit,
+
+			// Actions
+			fetchData: fetchAllData,
+			refreshClients: fetchClients,
+			refreshSettings: fetchCompanySettings,
+			refreshInvoices: fetchInvoices,
+
+			// Queries
+			getInvoiceById,
+			getInvoicesByStatus,
+			getInvoicesByClient,
+			getInvoicesByDateRange,
+
+			// Statistics
+			getInvoiceStats,
+		}),
+		[
+			clients,
+			companySettings,
+			invoices,
+			loading,
+			isEditing,
+			invoiceToEdit,
+			fetchAllData,
+			fetchClients,
+			fetchCompanySettings,
+			fetchInvoices,
+			getInvoiceById,
+			getInvoicesByStatus,
+			getInvoicesByClient,
+			getInvoicesByDateRange,
+			getInvoiceStats,
+		],
+	);
+
+	// ============================================================================
+	// EFFECTS
+	// ============================================================================
+
 	useEffect(() => {
 		fetchAllData();
 	}, [fetchAllData]);
 
+	// ============================================================================
+	// RENDER
+	// ============================================================================
+
 	return (
-		<InvoiceContext.Provider
-			value={{
-				clients,
-				companySettings,
-				invoices,
-				loading,
-				fetchData: fetchAllData,
-				refreshInvoices,
-				getInvoiceById,
-				getInvoicesByStatus,
-				getInvoicesByClient,
-			}}>
+		<InvoiceContext.Provider value={contextValue}>
 			{children}
 		</InvoiceContext.Provider>
 	);
 }
 
-export function useInvoiceContext() {
+// ============================================================================
+// HOOKS
+// ============================================================================
+
+export function useInvoiceContext(): InvoiceContextType {
 	const context = useContext(InvoiceContext);
 	if (!context) {
 		throw new Error("useInvoiceContext must be used within InvoiceProvider");
@@ -153,7 +326,7 @@ export function useInvoiceContext() {
 	return context;
 }
 
-// Simplified direct hooks
+// Direct atom hooks for performance
 export function useClients() {
 	return useAtom(clientsAtom);
 }
@@ -169,5 +342,43 @@ export function useInvoices() {
 export function useLoading() {
 	return useAtom(loadingAtom);
 }
+
+export function useIsEditing() {
+	return useAtom(isEditingAtom);
+}
+
+export function useInvoiceToEdit() {
+	return useAtom(invoiceToEditAtom);
+}
+
+// Professional invoice actions hook
+export function useInvoiceActions(): InvoiceActions {
+	const [isEditing, setIsEditing] = useAtom(isEditingAtom);
+	const [invoiceToEdit, setInvoiceToEdit] = useAtom(invoiceToEditAtom);
+
+	const setInvoiceToEditWithState = useCallback(
+		(invoice: Invoice | null) => {
+			setInvoiceToEdit(invoice);
+			setIsEditing(!!invoice);
+		},
+		[setInvoiceToEdit, setIsEditing],
+	);
+
+	const clearEditing = useCallback(() => {
+		setInvoiceToEdit(null);
+		setIsEditing(false);
+	}, [setInvoiceToEdit, setIsEditing]);
+
+	return {
+		isEditing,
+		invoiceToEdit,
+		setInvoiceToEdit: setInvoiceToEditWithState,
+		clearEditing,
+	};
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
 
 export { discountTypeAtom };

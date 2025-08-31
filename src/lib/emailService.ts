@@ -1,8 +1,9 @@
 import nodemailer from "nodemailer";
+import { Invoice, Setting } from "@prisma/client";
 
 export interface EmailInvoiceData {
-	invoice: any;
-	companySettings: any;
+	invoice: Invoice;
+	companySettings: Setting;
 	clientEmail: string;
 	clientName: string;
 	subject?: string;
@@ -60,6 +61,17 @@ export const sendInvoiceEmail = async (data: EmailInvoiceData) => {
 				<body>
 					<div class="container">
 						<div class="header">
+							${
+								companySettings?.logoUrl
+									? `<div class="logo-container" style="text-align: center; margin-bottom: 20px;">
+										<img
+										src="${companySettings.logoUrl}"
+										style="max-height:60px; max-width:200px; object-fit:contain; display:block; margin:0 auto;"
+										alt="Company Logo"
+										/>
+									</div>`
+									: ""
+							}
 							<div class="company-name">${
 								companySettings?.companyName || "Your Company"
 							}</div>
@@ -143,7 +155,7 @@ export const sendInvoiceEmail = async (data: EmailInvoiceData) => {
 
 		const mailOptions = {
 			from:
-				companySettings?.email ||
+				companySettings?.companyEmail ||
 				process.env.SMTP_FROM ||
 				"noreply@yourcompany.com",
 			to: clientEmail,

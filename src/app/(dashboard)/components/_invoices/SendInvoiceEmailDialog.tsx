@@ -22,12 +22,13 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Mail, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Invoice, Setting } from "@prisma/client";
 
 interface SendInvoiceEmailDialogProps {
 	isOpen: boolean;
 	onClose: () => void;
-	invoice: any;
-	companySettings: any;
+	invoice: Invoice | null;
+	companySettings: Setting | null;
 	clientEmail?: string;
 	clientName?: string;
 }
@@ -74,9 +75,9 @@ export default function SendInvoiceEmailDialog({
 	const handleTemplateChange = (templateKey: string) => {
 		setSelectedTemplate(templateKey);
 		const template = emailTemplates[templateKey as keyof typeof emailTemplates];
-
+		if (!invoice) return;
 		if (template) {
-			const dueDate = new Date(invoice?.dueDate).toLocaleDateString();
+			const dueDate = new Date(invoice.dueDate).toLocaleDateString();
 			const newSubject = template.subject
 				.replace("{invoiceNumber}", invoice?.number || "")
 				.replace(

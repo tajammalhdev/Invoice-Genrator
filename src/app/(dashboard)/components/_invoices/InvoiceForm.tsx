@@ -23,11 +23,14 @@ import AddClientModel from "../_clients/AddClientModel";
 import { InvoiceItem } from "@prisma/client";
 import { toast } from "sonner";
 import { useInvoiceContext } from "@/hooks/invoice/InvoiceContext";
+import { convertToDateString } from "@/lib/utils";
+
+// Utility function to convert string to date or return today
 
 export default function InvoiceForm() {
 	const [clients] = useClients();
 	const [companySettings] = useCompanySettings();
-	const { loading } = useInvoiceContext();
+	const { loading, isEditing, invoiceToEdit } = useInvoiceContext();
 	const [discountType] = useAtom(discountTypeAtom);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -88,10 +91,10 @@ export default function InvoiceForm() {
 
 	const tax = Number(watch("tax")) || Number(companySettings?.taxRate) || 0;
 	const discount = Number(watch("discount")) || 0;
-	const items = watch("items") || [];
+	const items_raw = watch("items") || [];
 
 	// Watch individual item totals for real-time subtotal updates
-	const itemTotals = items.map((_: any, index: number) =>
+	const itemTotals = items_raw.map((_: any, index: number) =>
 		watch(`items.${index}.total`),
 	);
 
@@ -142,7 +145,7 @@ export default function InvoiceForm() {
 	const handleFormSubmit = async (data: InvoiceDetails) => {
 		console.log("✅ Form submitted successfully:", {
 			data,
-			invoiceItems: items,
+			invoiceItems: items_raw,
 		});
 		try {
 			const response = await fetch("/api/invoices", {
@@ -169,6 +172,35 @@ export default function InvoiceForm() {
 		console.error("❌ Form validation errors:", errors);
 	};
 
+	/*============================================Editing Logic============================================*/
+
+	useEffect(() => {
+		if (isEditing && invoiceToEdit) {
+			const items = (invoiceToEdit as any).items.map((item: InvoiceItem) => {
+				return {
+					name: item.name,
+					quantity: item.quantity,
+					unitPrice: item.unitPrice,
+					total: item.total,
+				};
+			});
+			setValue("items", items);
+			setValue("clientId", invoiceToEdit.clientId);
+			setValue("invoiceNumber", invoiceToEdit.number);
+			setValue("issueDate", convertToDateString(invoiceToEdit.issueDate));
+			setValue("dueDate", convertToDateString(invoiceToEdit.dueDate));
+			setValue("notes", invoiceToEdit.notes || "");
+			setValue("status", invoiceToEdit.status);
+			setValue("discount", invoiceToEdit.discount.toString());
+			setValue("tax", invoiceToEdit.tax.toString());
+			setValue("subtotal", invoiceToEdit.subtotal.toString());
+			setValue("total", invoiceToEdit.total.toString());
+			setValue("paidTotal", invoiceToEdit.paidTotal.toString());
+			setValue("paymentTerm", invoiceToEdit.paymentTerm);
+		}
+	}, [invoiceToEdit, isEditing]);
+	/*============================================Editing Logic============================================*/
+
 	return (
 		<div className="w-full h-full min-h-full px-4 py-6">
 			<InvoiceHeader />
@@ -183,6 +215,7 @@ export default function InvoiceForm() {
 						errors={errors}
 						setCustomValue={setCustomValue}
 						onAddClient={() => setIsModalOpen(true)}
+						watch={watch}
 					/>
 					<InvoiceDetailsSection
 						register={register}

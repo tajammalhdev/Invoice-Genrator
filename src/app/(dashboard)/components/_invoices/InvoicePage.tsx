@@ -36,12 +36,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { downloadInvoicePDF } from "@/lib/pdfGenerator";
 import SendInvoiceEmailDialog from "./SendInvoiceEmailDialog";
+import { Invoice } from "@prisma/client";
+import { redirect, useRouter } from "next/navigation";
 
 export default function InvoicePage() {
 	const [invoices] = useInvoices();
 	const [loading] = useLoading();
 	const [companySettings] = useCompanySettings();
-	const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+	const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 	const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
 	const handleDownloadPDF = (invoice: any) => {
@@ -185,7 +187,9 @@ export default function InvoicePage() {
 													</DropdownMenuTrigger>
 													<DropdownMenuContent align="end">
 														<DropdownMenuItem
-															onClick={() => alert("Edit")}
+															onClick={() => {
+																redirect(`/invoices/${invoice.id}`);
+															}}
 															className=" hover:text-blue-700 hover:bg-blue-50 focus:text-blue-700 focus:bg-blue-50">
 															<Edit className="mr-2 h-4 w-4 text-blue-600" />
 															Edit

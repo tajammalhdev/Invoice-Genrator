@@ -19,12 +19,15 @@ export async function GET(request: Request) {
 	if (!settings) {
 		return NextResponse.json({ error: "Settings not found" }, { status: 404 });
 	}
-	const json = {
+
+	// Ensure all fields are properly returned, including logoUrl
+	const responseData = {
 		...settings,
 		taxRate: settings.taxRate?.toString?.() ?? "0",
-	} as any;
+		logoUrl: settings.logoUrl || null,
+	};
 
-	return NextResponse.json(settings);
+	return NextResponse.json(responseData);
 }
 
 export async function POST(request: Request) {
@@ -37,11 +40,41 @@ export async function POST(request: Request) {
 
 	const body = await request.json();
 
-	const settings = await prisma.setting.update({
-		where: {
-			userId: userId,
-		},
-		data: body,
-	});
-	return NextResponse.json(settings);
+	try {
+		// Check if settings exist, if not create them
+		let settings = await prisma.setting.findUnique({
+			where: { userId: userId },
+		});
+
+		if (!settings) {
+			// Create new settings with required fields
+			const createData = {
+				userId: userId,
+				companyName: body.companyName || "Your Company",
+				companyEmail: body.companyEmail || "billing@yourcompany.com",
+				...body,
+			};
+
+			settings = await prisma.setting.create({
+				data: createData,
+			});
+		} else {
+			// Update existing settings
+			settings = await prisma.setting.update({
+				where: { userId: userId },
+				data: body,
+			});
+		}
+
+		return NextResponse.json(settings);
+	} catch (error) {
+		console.error("Error saving settings:", error);
+		return NextResponse.json(
+			{
+				error: "Failed to save settings",
+				details: error instanceof Error ? error.message : "Unknown error",
+			},
+			{ status: 500 },
+		);
+	}
 }

@@ -68,16 +68,13 @@ export default function Preferences() {
 				<div className="space-y-2">
 					<Label htmlFor="taxRate">Default Tax Rate (%)</Label>
 					<Input
-						type="number"
-						min={0}
-						max={100}
-						step="0.01"
+						type="text"
 						placeholder="0"
 						{...register("taxRate", {
 							valueAsNumber: true,
 							setValueAs: (value) => {
 								if (value === "") return 0;
-								return parseFloat(value) || 0;
+								return parseInt(value) || 0;
 							},
 						})}
 					/>

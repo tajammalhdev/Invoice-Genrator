@@ -26,7 +26,11 @@ type Tab = {
 };
 
 export default function SettingsForm() {
-	const { companySettings, loading: contextLoading } = useInvoiceContext();
+	const {
+		companySettings,
+		loading: contextLoading,
+		fetchData,
+	} = useInvoiceContext();
 	const methods = useForm<Settings>({
 		resolver: zodResolver(SettingsSchema),
 		defaultValues: {
@@ -75,7 +79,7 @@ export default function SettingsForm() {
 			setValue("country", companySettings.country ?? "");
 			setValue("currencyCode", companySettings.currencyCode ?? "USD");
 			setValue("dateFormat", companySettings.dateFormat ?? "MM/DD/YYYY");
-			setValue("taxRate", companySettings.taxRate ?? 0);
+			setValue("taxRate", companySettings.taxRate ?? "0");
 			setValue("invoicePrefix", companySettings.invoicePrefix ?? "INV");
 			setValue("nextInvoiceNumber", companySettings.nextInvoiceNumber ?? 1);
 			setValue("logoUrl", companySettings.logoUrl ?? "");
@@ -98,6 +102,8 @@ export default function SettingsForm() {
 			if (response.ok) {
 				toast.success("Settings updated successfully");
 				reset(data);
+				// Refresh the company settings in the atom
+				await fetchData();
 			}
 		} catch (error) {
 			console.error(error);

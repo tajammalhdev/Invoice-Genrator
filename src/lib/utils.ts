@@ -18,3 +18,32 @@ export const formatDate = (dateString: string | Date) => {
 		day: "numeric",
 	});
 };
+
+export async function imabebase64(image: File): Promise<string> {
+	const reader = new FileReader();
+	reader.readAsDataURL(image);
+
+	return new Promise((resolve, reject) => {
+		reader.onload = () => resolve(reader.result as string);
+
+		reader.onerror = (error) => reject(error);
+	});
+}
+
+export const convertToDateString = (
+	dateInput: string | Date | null | undefined,
+): string => {
+	if (!dateInput) {
+		return new Date().toISOString().split("T")[0];
+	}
+
+	try {
+		const date = new Date(dateInput);
+		if (isNaN(date.getTime())) {
+			return new Date().toISOString().split("T")[0];
+		}
+		return date.toISOString().split("T")[0];
+	} catch (error) {
+		return new Date().toISOString().split("T")[0];
+	}
+};

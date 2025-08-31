@@ -85,6 +85,7 @@ export const SettingsSchema = z.object({
 		.min(0, "Tax rate must be 0 or greater")
 		.max(100, "Tax rate cannot exceed 100%")
 		.optional(),
+
 	invoicePrefix: z
 		.string()
 		.min(1, "Invoice prefix is required")

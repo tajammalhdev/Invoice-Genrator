@@ -18,10 +18,14 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import { UseFormRegisterReturn, FieldErrors } from "react-hook-form";
+import {
+	UseFormRegisterReturn,
+	FieldErrors,
+	UseFormWatch,
+} from "react-hook-form";
 import { InvoiceDetails } from "@/lib/zodSchemas";
-import { useState, useMemo, useCallback } from "react";
-import { cn } from "@/lib/utils";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { cn, convertToDateString } from "@/lib/utils";
 import { PaymentTerm } from "@/lib/zodSchemas";
 import {
 	Select,
@@ -45,6 +49,7 @@ interface InvoiceBasicInfoProps {
 	errors: FieldErrors<InvoiceDetails>;
 	setCustomValue: (id: string, value: any) => void;
 	onAddClient?: () => void;
+	watch: UseFormWatch<InvoiceDetails>;
 }
 
 export default function InvoiceBasicInfo({
@@ -54,12 +59,22 @@ export default function InvoiceBasicInfo({
 	errors,
 	setCustomValue,
 	onAddClient,
+	watch,
 }: InvoiceBasicInfoProps) {
 	const [open, setOpen] = useState(false);
 	const [selectedClientId, setSelectedClientId] = useState<string>("");
 
 	// Stable default date values to prevent infinite loops
-	const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+	const today = useMemo(() => convertToDateString(new Date()), []);
+
+	const clientId = watch("clientId");
+
+	// Sync selectedClientId with form clientId when it changes
+	useEffect(() => {
+		if (clientId && clientId !== selectedClientId) {
+			setSelectedClientId(clientId);
+		}
+	}, [clientId, selectedClientId]);
 
 	// Memoize setCustomValue calls to prevent infinite loops
 	const handleClientSelect = useCallback(
