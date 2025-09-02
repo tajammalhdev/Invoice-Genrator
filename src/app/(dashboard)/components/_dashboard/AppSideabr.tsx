@@ -17,20 +17,19 @@ import {
 } from "@/components/ui/sidebar";
 import { data } from "../../../data/dashboard-nav";
 import { IconInnerShadowTop } from "@tabler/icons-react";
+import { ProfileSwitcher } from "./ProfileSwitcher";
+import ThemeSwitcher from "@/app/components/ThemeSwitcher";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	return (
 		<Sidebar collapsible="offcanvas" {...props}>
-			<SidebarHeader>
+			<SidebarHeader className="border-sidebar-border h-16 border-b">
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton
 							asChild
 							className="data-[slot=sidebar-menu-button]:!p-1.5">
-							<a href="#">
-								<IconInnerShadowTop className="!size-5" />
-								<span className="text-base font-semibold">Acme Inc.</span>
-							</a>
+							<NavUser user={data.user} />
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
@@ -40,9 +39,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				<NavDocuments items={data.documents} />
 				<NavSecondary items={data.navSecondary} className="mt-auto" />
 			</SidebarContent>
-			<SidebarFooter>
-				<NavUser user={data.user} />
-			</SidebarFooter>
+			<SidebarFooter>{/* <ThemeSwitcher /> */}</SidebarFooter>
 		</Sidebar>
 	);
 }

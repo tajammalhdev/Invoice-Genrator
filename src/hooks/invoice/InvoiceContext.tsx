@@ -67,6 +67,15 @@ export interface InvoiceActions {
 	invoiceToEdit: Invoice | null;
 	setInvoiceToEdit: (invoice: Invoice | null) => void;
 	clearEditing: () => void;
+
+	// Email dialog actions
+	selectedInvoice: Invoice | null;
+	isEmailDialogOpen: boolean;
+	openEmailDialog: (invoice: Invoice) => void;
+	closeEmailDialog: () => void;
+
+	// PDF actions
+	downloadInvoicePDF: (invoice: Invoice) => void;
 }
 
 // ============================================================================
@@ -86,6 +95,10 @@ const discountTypeAtom = atom<string>("percentage");
 // Editing state atoms
 const isEditingAtom = atom<boolean>(false);
 const invoiceToEditAtom = atom<Invoice | null>(null);
+
+// Email dialog state atoms
+const selectedInvoiceAtom = atom<Invoice | null>(null);
+const isEmailDialogOpenAtom = atom<boolean>(false);
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -355,6 +368,11 @@ export function useInvoiceToEdit() {
 export function useInvoiceActions(): InvoiceActions {
 	const [isEditing, setIsEditing] = useAtom(isEditingAtom);
 	const [invoiceToEdit, setInvoiceToEdit] = useAtom(invoiceToEditAtom);
+	const [selectedInvoice, setSelectedInvoice] = useAtom(selectedInvoiceAtom);
+	const [isEmailDialogOpen, setIsEmailDialogOpen] = useAtom(
+		isEmailDialogOpenAtom,
+	);
+	const [companySettings] = useAtom(companySettingsAtom);
 
 	const setInvoiceToEditWithState = useCallback(
 		(invoice: Invoice | null) => {
@@ -369,11 +387,69 @@ export function useInvoiceActions(): InvoiceActions {
 		setIsEditing(false);
 	}, [setInvoiceToEdit, setIsEditing]);
 
+	const openEmailDialog = useCallback(
+		(invoice: Invoice) => {
+			setSelectedInvoice(invoice);
+			setIsEmailDialogOpen(true);
+		},
+		[setSelectedInvoice, setIsEmailDialogOpen],
+	);
+
+	const closeEmailDialog = useCallback(() => {
+		setSelectedInvoice(null);
+		setIsEmailDialogOpen(false);
+	}, [setSelectedInvoice, setIsEmailDialogOpen]);
+
+	const downloadInvoicePDF = useCallback(
+		(invoice: Invoice) => {
+			// Import the PDF generator function
+			import("@/lib/pdfGenerator").then(
+				({ downloadInvoicePDF: pdfDownload }) => {
+					pdfDownload(invoice as any, companySettings);
+				},
+			);
+		},
+		[companySettings],
+	);
+
 	return {
 		isEditing,
 		invoiceToEdit,
 		setInvoiceToEdit: setInvoiceToEditWithState,
 		clearEditing,
+		selectedInvoice,
+		isEmailDialogOpen,
+		openEmailDialog,
+		closeEmailDialog,
+		downloadInvoicePDF,
+	};
+}
+
+// Email dialog hook
+export function useEmailDialog() {
+	const [selectedInvoice, setSelectedInvoice] = useAtom(selectedInvoiceAtom);
+	const [isEmailDialogOpen, setIsEmailDialogOpen] = useAtom(
+		isEmailDialogOpenAtom,
+	);
+
+	const openEmailDialog = useCallback(
+		(invoice: Invoice) => {
+			setSelectedInvoice(invoice);
+			setIsEmailDialogOpen(true);
+		},
+		[setSelectedInvoice, setIsEmailDialogOpen],
+	);
+
+	const closeEmailDialog = useCallback(() => {
+		setSelectedInvoice(null);
+		setIsEmailDialogOpen(false);
+	}, [setSelectedInvoice, setIsEmailDialogOpen]);
+
+	return {
+		selectedInvoice,
+		isEmailDialogOpen,
+		openEmailDialog,
+		closeEmailDialog,
 	};
 }
 

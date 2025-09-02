@@ -31,7 +31,7 @@ export default function InvoiceSummary({
 
 	return (
 		<>
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-9">
 				{/* Public Note Editor */}
 				<div className="col-span-1">
 					<Card className="w-full shadow-none rounded-none">

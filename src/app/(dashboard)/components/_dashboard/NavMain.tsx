@@ -68,12 +68,12 @@ export function NavMain({
 								</Link>
 							</SidebarMenuButton>
 							{item.items && item.items.length > 0 && (
-								<div className="ml-6 mt-2 space-y-1">
+								<div className="ml-6 space-y-1">
 									{item.items.map((subItem) => (
 										<Link
 											key={subItem.title}
 											href={subItem.url}
-											className="flex items-center justify-center gap-2 p-1 text-white text-sm bg-primary  hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-4 duration-200 ease-linear w-fit">
+											className="flex items-center justify-center gap-2 p-1  text-sm bg-accent text-primary hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-4 duration-200 ease-linear w-fit">
 											{subItem.icon && <subItem.icon className="h-4 w-4" />}
 											{subItem.title && <span>{subItem.title}</span>}
 										</Link>

@@ -22,7 +22,7 @@ type ItemListProps = {
 
 export default function ItemList({ children, addItem }: ItemListProps) {
 	return (
-		<Card className="w-full shadow-none p-0 rounded-2xl overflow-hidden border border-border dark:border-border">
+		<Card className="w-full shadow-none py-0 overflow-hidden border border-border dark:border-border rounded-none my-6">
 			<CardContent className="p-0">
 				<div className="flex items-center justify-between">
 					<Table className="min-w-full table-auto">

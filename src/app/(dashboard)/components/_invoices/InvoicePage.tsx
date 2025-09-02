@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import {
 	useInvoices,
 	useLoading,
 	useCompanySettings,
+	useInvoiceActions,
+	useEmailDialog,
 } from "@/hooks/invoice/InvoiceContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -34,55 +35,54 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { downloadInvoicePDF } from "@/lib/pdfGenerator";
 import SendInvoiceEmailDialog from "./SendInvoiceEmailDialog";
 import { Invoice } from "@prisma/client";
 import { redirect, useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function InvoicePage() {
 	const [invoices] = useInvoices();
 	const [loading] = useLoading();
 	const [companySettings] = useCompanySettings();
-	const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-	const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
-
-	const handleDownloadPDF = (invoice: any) => {
-		downloadInvoicePDF(invoice, companySettings);
-	};
-
-	const handleSendEmail = (invoice: any) => {
-		setSelectedInvoice(invoice);
-		setIsEmailDialogOpen(true);
-	};
+	const { downloadInvoicePDF } = useInvoiceActions();
+	const {
+		selectedInvoice,
+		isEmailDialogOpen,
+		openEmailDialog,
+		closeEmailDialog,
+	} = useEmailDialog();
 
 	// Loading skeleton rows
 	const LoadingRows = () => (
 		<>
 			{Array.from({ length: 5 }).map((_, index) => (
 				<TableRow key={`loading-${index}`}>
-					<TableCell>
+					<TableCell className="w-[120px]">
 						<Skeleton className="h-4 w-20" />
 					</TableCell>
-					<TableCell>
+					<TableCell className="w-[150px]">
 						<Skeleton className="h-4 w-24" />
 					</TableCell>
-					<TableCell>
+					<TableCell className="w-[100px]">
 						<Skeleton className="h-4 w-20" />
 					</TableCell>
-					<TableCell>
+					<TableCell className="w-[100px]">
 						<Skeleton className="h-4 w-20" />
 					</TableCell>
-					<TableCell>
+					<TableCell className="w-[100px]">
 						<Skeleton className="h-4 w-16" />
 					</TableCell>
-					<TableCell>
-						<Skeleton className="h-4 w-16" />
+					<TableCell className="w-[100px] text-right">
+						<Skeleton className="h-4 w-16 ml-auto" />
 					</TableCell>
-					<TableCell>
-						<Skeleton className="h-4 w-16" />
+					<TableCell className="w-[120px] text-right">
+						<Skeleton className="h-4 w-16 ml-auto" />
 					</TableCell>
-					<TableCell>
-						<Skeleton className="h-4 w-16" />
+					<TableCell className="w-[120px] text-right">
+						<Skeleton className="h-4 w-16 ml-auto" />
+					</TableCell>
+					<TableCell className="w-[120px] text-right">
+						<Skeleton className="h-4 w-16 ml-auto" />
 					</TableCell>
 				</TableRow>
 			))}
@@ -117,7 +117,10 @@ export default function InvoicePage() {
 									<TableHead className="w-[100px]">Due Date</TableHead>
 									<TableHead className="w-[100px]">Status</TableHead>
 									<TableHead className="w-[100px] text-right">Total</TableHead>
-									<TableHead className="w-[100px] text-right">Paid</TableHead>
+									<TableHead className="w-[120px] text-right">Paid</TableHead>
+									<TableHead className="w-[120px] text-right">
+										Payment Terms
+									</TableHead>
 									<TableHead className="w-[120px] text-right">
 										Actions
 									</TableHead>
@@ -129,7 +132,7 @@ export default function InvoicePage() {
 								) : invoices && invoices.length === 0 ? (
 									<TableRow>
 										<TableCell
-											colSpan={8}
+											colSpan={9}
 											className="text-center py-8 text-muted-foreground">
 											{!invoices ? "Loading invoices..." : "No invoices found"}
 										</TableCell>
@@ -138,7 +141,9 @@ export default function InvoicePage() {
 									invoices?.map((invoice) => (
 										<TableRow key={invoice.id} className="hover:bg-muted/50">
 											<TableCell className="font-medium">
-												{invoice.number}
+												<Link href={`/invoices/${invoice.id}`}>
+													{invoice.number}
+												</Link>
 											</TableCell>
 											<TableCell>
 												{(invoice as any).client?.name ||
@@ -175,6 +180,11 @@ export default function InvoicePage() {
 												${invoice.paidTotal?.toFixed(2) || "0.00"}
 											</TableCell>
 											<TableCell className="text-right">
+												<span className="text-sm text-muted-foreground">
+													{invoice.paymentTerm}
+												</span>
+											</TableCell>
+											<TableCell className="text-right">
 												<DropdownMenu>
 													<DropdownMenuTrigger asChild>
 														<Button
@@ -190,21 +200,21 @@ export default function InvoicePage() {
 															onClick={() => {
 																redirect(`/invoices/${invoice.id}`);
 															}}
-															className=" hover:text-blue-700 hover:bg-blue-50 focus:text-blue-700 focus:bg-blue-50">
-															<Edit className="mr-2 h-4 w-4 text-blue-600" />
+															className=" hover:text-primary hover:bg-accent focus:text-primary focus:bg-accent">
+															<Edit className="mr-2 h-4 w-4 text-primary" />
 															Edit
 														</DropdownMenuItem>
 														<DropdownMenuSeparator />
 														<DropdownMenuItem
-															onClick={() => handleSendEmail(invoice)}
-															className=" hover:text-blue-700 hover:bg-blue-50 focus:text-blue-700 focus:bg-blue-50">
-															<Mail className="mr-2 h-4 w-4 text-blue-600" />
+															onClick={() => openEmailDialog(invoice)}
+															className=" hover:text-primary hover:bg-accent focus:text-primary focus:bg-accent">
+															<Mail className="mr-2 h-4 w-4 text-primary" />
 															Email Invoice
 														</DropdownMenuItem>
 														<DropdownMenuItem
-															onClick={() => handleDownloadPDF(invoice)}
-															className=" hover:text-blue-700 hover:bg-blue-50 focus:text-blue-700 focus:bg-blue-50">
-															<FileText className="mr-2 h-4 w-4 text-blue-600" />
+															onClick={() => downloadInvoicePDF(invoice)}
+															className=" hover:text-primary hover:bg-accent focus:text-primary focus:bg-accent">
+															<FileText className="mr-2 h-4 w-4 text-primary" />
 															Download PDF
 														</DropdownMenuItem>
 														<DropdownMenuSeparator />
@@ -229,7 +239,7 @@ export default function InvoicePage() {
 			{/* Email Dialog */}
 			<SendInvoiceEmailDialog
 				isOpen={isEmailDialogOpen}
-				onClose={() => setIsEmailDialogOpen(false)}
+				onClose={closeEmailDialog}
 				invoice={selectedInvoice}
 				companySettings={companySettings}
 				clientEmail={(selectedInvoice as any)?.client?.email}

@@ -1,33 +1,112 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Home, ChevronRight, FileText } from "lucide-react";
+import {
+	Home,
+	ChevronRight,
+	FileText,
+	Plus,
+	Save,
+	Loader2,
+	ArrowDown,
+	ChevronDown,
+	Trash2,
+	Mail,
+} from "lucide-react";
 import Link from "next/link";
-
-export default function InvoiceHeader() {
+import { SiteHeader } from "../_dashboard/SiteHeader";
+import { Button } from "@/components/ui/button";
+import { useInvoiceActions } from "@/hooks/invoice/InvoiceContext";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import SendInvoiceEmailDialog from "./SendInvoiceEmailDialog";
+import { useCompanySettings } from "@/hooks/invoice/InvoiceContext";
+import { useEmailDialog } from "@/hooks/invoice/InvoiceContext";
+import { downloadInvoicePDF } from "@/lib/pdfGenerator";
+interface InvoiceActionsProps {
+	isSubmitting?: boolean;
+}
+export default function InvoiceHeader({ isSubmitting }: InvoiceActionsProps) {
+	const { isEditing, invoiceToEdit, downloadInvoicePDF } = useInvoiceActions();
+	const {
+		selectedInvoice,
+		isEmailDialogOpen,
+		openEmailDialog,
+		closeEmailDialog,
+	} = useEmailDialog();
+	const [companySettings] = useCompanySettings();
 	return (
-		<Card className="w-full shadow-none rounded-none border-0 bg-accent">
-			<CardContent className="px-5 sm:px-6 py-4 sm:py-3 ">
-				<nav className="flex items-center space-x-1 text-sm text-muted-foreground">
-					<Link
-						href="/dashboard"
-						className="flex items-center hover:text-foreground transition-colors">
-						<Home className="h-4 w-4 mr-1" />
-						Dashboard
-					</Link>
-					<ChevronRight className="h-4 w-4" />
-					<Link
-						href="/invoices"
-						className="hover:text-foreground transition-colors">
-						Invoices
-					</Link>
-					<ChevronRight className="h-4 w-4" />
-					<span className="flex items-center text-foreground">
-						<FileText className="h-4 w-4 mr-1" />
-						Create Invoice
-					</span>
-				</nav>
-			</CardContent>
-		</Card>
+		<>
+			<SiteHeader>
+				<div className="flex justify-end gap-4">
+					<Button type="button" variant="outline" disabled={isSubmitting}>
+						Cancel
+					</Button>
+					{isEditing && invoiceToEdit ? (
+						<div
+							className="inline-flex items-center rounded-md shadow-sm"
+							role="group">
+							<Button className="rounded-r-none h-10">Update</Button>
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button
+										variant="outline"
+										className="rounded-l-none h-10 px-3 bg-accent-foreground text-white">
+										<ChevronDown className="h-4 w-4" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									<DropdownMenuSeparator />
+									<DropdownMenuItem
+										onClick={() => openEmailDialog(invoiceToEdit)}
+										className=" hover:text-primary hover:bg-accent focus:text-primary focus:bg-accent">
+										<Mail className="mr-2 h-4 w-4 text-primary" />
+										Email Invoice
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										onClick={() => downloadInvoicePDF(invoiceToEdit)}
+										className=" hover:text-primary hover:bg-accent focus:text-primary focus:bg-accent">
+										<FileText className="mr-2 h-4 w-4 text-primary" />
+										Download PDF
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem
+										onClick={() => alert("Delete")}
+										className="text-red-600 hover:text-red-700 hover:bg-red-50 focus:text-red-700 focus:bg-red-50">
+										<Trash2 className="mr-2 h-4 w-4 text-red-600" />
+										Delete
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</div>
+					) : (
+						<Button
+							type="submit"
+							className="flex items-center gap-2"
+							disabled={isSubmitting}>
+							{isSubmitting ? (
+								<Loader2 className="h-4 w-4 animate-spin" />
+							) : (
+								<Save className="h-4 w-4" />
+							)}
+							{isSubmitting ? "Saving..." : "Save"}
+						</Button>
+					)}
+				</div>
+			</SiteHeader>
+			<SendInvoiceEmailDialog
+				isOpen={isEmailDialogOpen}
+				onClose={closeEmailDialog}
+				invoice={selectedInvoice}
+				companySettings={companySettings}
+				clientEmail={(selectedInvoice as any)?.client?.email}
+				clientName={(selectedInvoice as any)?.client?.name}
+			/>
+		</>
 	);
 }

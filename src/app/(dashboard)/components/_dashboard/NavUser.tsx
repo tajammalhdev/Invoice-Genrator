@@ -25,6 +25,8 @@ import {
 import Link from "next/link";
 import { signOut } from "@/lib/auth";
 import { signOutAction } from "../../../../../actions/signOutAction";
+import { ChevronsUpDown } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 export function NavUser({
 	user,
@@ -36,6 +38,8 @@ export function NavUser({
 	};
 }) {
 	const { isMobile } = useSidebar();
+	const { data: session } = useSession();
+	const userEmail = session?.user?.email || "Guest";
 
 	return (
 		<SidebarMenu>
@@ -52,10 +56,10 @@ export function NavUser({
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-medium">{user.name}</span>
 								<span className="text-muted-foreground truncate text-xs">
-									{user.email}
+									{userEmail}
 								</span>
 							</div>
-							<IconDotsVertical className="ml-auto size-4" />
+							<ChevronsUpDown className="ml-auto size-4" />
 						</SidebarMenuButton>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
@@ -66,13 +70,18 @@ export function NavUser({
 						<DropdownMenuLabel className="p-0 font-normal">
 							<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
 								<Avatar className="h-8 w-8 rounded-lg">
-									<AvatarImage src={user.avatar} alt={user.name} />
+									<AvatarImage
+										src={session?.user?.image || ""}
+										alt={session?.user?.name || "Guest"}
+									/>
 									<AvatarFallback className="rounded-lg">CN</AvatarFallback>
 								</Avatar>
 								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="truncate font-medium">{user.name}</span>
+									<span className="truncate font-medium">
+										{session?.user?.name || "Guest"}
+									</span>
 									<span className="text-muted-foreground truncate text-xs">
-										{user.email}
+										{userEmail}
 									</span>
 								</div>
 							</div>

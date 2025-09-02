@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import { SiteHeader } from "../_dashboard/SiteHeader";
 
 export default function ClientContainer() {
 	const [showAddModal, setShowAddModal] = useState(false);
@@ -207,32 +208,19 @@ export default function ClientContainer() {
 
 	return (
 		<>
-			<Card className="w-full shadow-none rounded-none border-0 bg-accent">
-				<CardContent className="px-5 sm:px-6 py-4 sm:py-3 flex items-center justify-between">
-					<nav className="flex items-center space-x-1 text-sm text-muted-foreground">
-						<Link
-							href="/dashboard"
-							className="flex items-center hover:text-foreground transition-colors">
-							<Home className="h-4 w-4 mr-1" />
-							Dashboard
-						</Link>
-						<ChevronRight className="h-4 w-4" />
-						<span className="flex items-center text-foreground">Invoices</span>
-					</nav>
-					<Button
-						className="flex items-center gap-2"
-						onClick={() => setShowAddModal(true)}>
-						<Plus className="h-4 w-4" />
-						Add New Client
-					</Button>
-				</CardContent>
-			</Card>
-
+			<SiteHeader>
+				<Button
+					className="flex items-center gap-2"
+					onClick={() => setShowAddModal(true)}>
+					<Plus className="h-4 w-4" />
+					Add New Client
+				</Button>
+			</SiteHeader>
 			{isLoading ? (
 				<Loading />
 			) : (
 				<>
-					<div className=" mx-auto py-10 rounded-none">
+					<div className=" mx-auto py-10 rounded-none px-4 py-6 ">
 						{clients && <DataTable columns={columns} data={clients} />}
 						{totalPage !== 1 && (
 							<div className="my-4">

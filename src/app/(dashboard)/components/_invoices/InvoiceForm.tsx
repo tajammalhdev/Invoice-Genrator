@@ -202,61 +202,60 @@ export default function InvoiceForm() {
 	/*============================================Editing Logic============================================*/
 
 	return (
-		<div className="w-full h-full min-h-full px-4 py-6">
-			<InvoiceHeader />
+		<>
 			<form
 				onSubmit={handleSubmit(handleFormSubmit, handleFormError)}
-				className="space-y-6 mt-6">
-				<div className="grid grid-cols-12 gap-4 border-0 rounded-none">
-					<InvoiceBasicInfo
-						clients={clients}
-						isLoadingClients={loading.clients}
-						register={register}
-						errors={errors}
-						setCustomValue={setCustomValue}
-						onAddClient={() => setIsModalOpen(true)}
-						watch={watch}
-					/>
-					<InvoiceDetailsSection
-						register={register}
-						setCustomValue={setCustomValue}
-						discount={discount}
-						errors={errors}
-					/>
-				</div>
-
-				<ItemList addItem={handleAddNewItemRow}>
-					{fields.map((field, index) => (
-						<ItemListItem
-							key={field.id}
-							control={control}
-							id={field.id}
-							required={true}
+				className="">
+				<InvoiceHeader isSubmitting={isSubmitting} />
+				<div className="w-full px-4 py-6">
+					<div className="grid grid-cols-12 gap-4 border-0 rounded-none">
+						<InvoiceBasicInfo
+							clients={clients}
+							isLoadingClients={loading.clients}
 							register={register}
 							errors={errors}
-							watch={watch}
-							remove={handleRemoveItem}
-							index={index}
 							setCustomValue={setCustomValue}
-							currency={companySettings?.currencyCode || "USD"}
+							onAddClient={() => setIsModalOpen(true)}
+							watch={watch}
 						/>
-					))}
-				</ItemList>
+						<InvoiceDetailsSection
+							register={register}
+							setCustomValue={setCustomValue}
+							discount={discount}
+							errors={errors}
+						/>
+					</div>
 
-				<InvoiceSummary
-					subtotal={subtotal}
-					tax={calculatedTaxAmount}
-					total={total}
-					discount={calculatedDiscountAmount}
-					currency={watch("currency") || "USD"}
-					register={register}
-					errors={errors}
-					watch={watch}
-				/>
+					<ItemList addItem={handleAddNewItemRow}>
+						{fields.map((field, index) => (
+							<ItemListItem
+								key={field.id}
+								control={control}
+								id={field.id}
+								required={true}
+								register={register}
+								errors={errors}
+								watch={watch}
+								remove={handleRemoveItem}
+								index={index}
+								setCustomValue={setCustomValue}
+								currency={companySettings?.currencyCode || "USD"}
+							/>
+						))}
+					</ItemList>
 
-				<InvoiceActions isSubmitting={isSubmitting} />
+					<InvoiceSummary
+						subtotal={subtotal}
+						tax={calculatedTaxAmount}
+						total={total}
+						discount={calculatedDiscountAmount}
+						currency={watch("currency") || "USD"}
+						register={register}
+						errors={errors}
+						watch={watch}
+					/>
+				</div>
 			</form>
-
 			<AddClientModel
 				isOpen={isModalOpen}
 				onClose={() => setIsModalOpen(false)}
@@ -265,6 +264,6 @@ export default function InvoiceForm() {
 					// Optionally refresh clients list here
 				}}
 			/>
-		</div>
+		</>
 	);
 }
