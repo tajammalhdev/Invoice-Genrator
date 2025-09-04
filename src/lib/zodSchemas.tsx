@@ -118,21 +118,16 @@ export const ItemSchema = z.object({
 		.max(100, "Item name must be less than 100 characters"),
 	description: z.string().optional(),
 	quantity: z
-		.string()
+		.number()
 		.min(1, "Quantity is required")
-		.transform((val) => parseFloat(val) || 0)
 		.refine((val) => val > 0, "Quantity must be greater than 0")
 		.refine((val) => val <= 999999, "Quantity is too large"),
 	unitPrice: z
-		.string()
+		.number()
 		.min(1, "Unit price is required")
-		.transform((val) => parseFloat(val) || 0)
 		.refine((val) => val >= 0, "Unit price must be 0 or greater")
 		.refine((val) => val <= 999999, "Unit price is too large"),
-	total: z
-		.string()
-		.transform((val) => parseFloat(val) || 0)
-		.refine((val) => val >= 0, "Total must be 0 or greater"),
+	total: z.number().refine((val) => val >= 0, "Total must be 0 or greater"),
 });
 
 const PaymentSchema = z.object({

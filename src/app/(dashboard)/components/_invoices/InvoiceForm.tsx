@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFormState } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray } from "react-hook-form";
 import { InvoiceDetails, InvoiceDetailsSchema } from "@/lib/zodSchemas";
 import {
 	useClients,
 	useCompanySettings,
-	useIsLoadingClients,
 	discountTypeAtom,
 } from "@/hooks/invoice";
 import { useAtom } from "jotai";
@@ -18,19 +17,26 @@ import InvoiceDetailsSection from "./InvoiceDetailsSection";
 import ItemList from "./ItemList";
 import ItemListItem from "./ItemListItem";
 import InvoiceSummary from "./InvoiceSummary";
-import InvoiceActions from "./InvoiceActions";
 import AddClientModel from "../_clients/AddClientModel";
-import { InvoiceItem } from "@prisma/client";
+import { Invoice, InvoiceItem } from "@prisma/client";
 import { toast } from "sonner";
 import { useInvoiceContext } from "@/hooks/invoice/InvoiceContext";
 import { convertToDateString } from "@/lib/utils";
 
 // Utility function to convert string to date or return today
 
-export default function InvoiceForm() {
+interface InvoiceFormProps {
+	type: "create" | "edit";
+	data?: Invoice & {
+		items?: InvoiceItem[];
+		payments?: any[];
+	};
+}
+
+export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 	const [clients] = useClients();
 	const [companySettings] = useCompanySettings();
-	const { loading, isEditing, invoiceToEdit } = useInvoiceContext();
+	const { loading } = useInvoiceContext();
 	const [discountType] = useAtom(discountTypeAtom);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -45,30 +51,26 @@ export default function InvoiceForm() {
 	} = useForm<any>({
 		resolver: zodResolver(InvoiceDetailsSchema),
 		defaultValues: {
-			clientId: "",
-			invoiceNumber: "",
-			issueDate: new Date().toISOString().split("T")[0],
-			dueDate: new Date().toISOString().split("T")[0],
-			notes: "",
-			status: "DRAFT",
-			discount: "0",
+			clientId: data?.clientId || "",
+			invoiceNumber: data?.number || "",
+			issueDate: data?.issueDate
+				? convertToDateString(data?.issueDate)
+				: new Date().toISOString().split("T")[0],
+			dueDate: data?.dueDate
+				? convertToDateString(data?.dueDate)
+				: new Date().toISOString().split("T")[0],
+			notes: data?.notes || "",
+			status: data?.status || "DRAFT",
+			discount: data?.discount.toString() || "0",
 			tax: companySettings?.taxRate?.toString() || "0",
-			subtotal: "0",
-			total: "0",
-			paidTotal: "0",
+			subtotal: data?.subtotal.toString() || "0",
+			total: data?.total.toString() || "0",
+			paidTotal: data?.paidTotal.toString() || "0",
 			currency: companySettings?.currencyCode || "USD",
 			language: "en",
-			paymentTerm: "NET30",
-			items: [
-				{
-					name: "",
-					description: "",
-					quantity: "0",
-					unitPrice: "0",
-					total: "0",
-				},
-			],
-			payments: [],
+			paymentTerm: data?.paymentTerm || "NET30",
+			items: data?.items || [],
+			payments: data?.payments || [],
 		},
 		mode: "onChange",
 	});
@@ -142,26 +144,41 @@ export default function InvoiceForm() {
 		remove(index);
 	};
 
-	const handleFormSubmit = async (data: InvoiceDetails) => {
-		console.log("✅ Form submitted successfully:", {
-			data,
-			invoiceItems: items_raw,
-		});
+	const handleFormSubmit = async (formData: InvoiceDetails) => {
 		try {
-			const response = await fetch("/api/invoices", {
-				headers: {
-					"Content-Type": "application/json",
-				},
-				method: "POST",
-				body: JSON.stringify(data),
-			});
-			const json = await response.json();
-			if (response.ok) {
-				const successMessage = json.message || "Invoice created successfully";
-				toast.success(successMessage);
-			} else {
-				const errorMessage = json.error || "Failed to create invoice";
-				toast.error(errorMessage);
+			if (type === "create") {
+				const response = await fetch("/api/invoices", {
+					headers: {
+						"Content-Type": "application/json",
+					},
+					method: "POST",
+					body: JSON.stringify(formData),
+				});
+				const json = await response.json();
+				if (response.ok) {
+					const successMessage = json.message || "Invoice created successfully";
+					toast.success(successMessage);
+				} else {
+					const errorMessage = json.error || "Failed to create invoice";
+					toast.error(errorMessage);
+				}
+			} else if (type === "edit") {
+				const response = await fetch(`/api/invoices/`, {
+					headers: {
+						"Content-Type": "application/json",
+					},
+					method: "PUT",
+					body: JSON.stringify({ ...formData, invoiceId: data?.id }),
+				});
+				const json = await response.json();
+				console.log(response);
+				if (response.ok) {
+					const successMessage = json.message || "Invoice updated successfully";
+					toast.success(successMessage);
+				} else {
+					const errorMessage = json.error || "Failed to update invoice";
+					toast.error(errorMessage);
+				}
 			}
 		} catch (error) {
 			console.error(error);
@@ -172,35 +189,6 @@ export default function InvoiceForm() {
 		console.error("❌ Form validation errors:", errors);
 	};
 
-	/*============================================Editing Logic============================================*/
-
-	useEffect(() => {
-		if (isEditing && invoiceToEdit) {
-			const items = (invoiceToEdit as any).items.map((item: InvoiceItem) => {
-				return {
-					name: item.name,
-					quantity: item.quantity,
-					unitPrice: item.unitPrice,
-					total: item.total,
-				};
-			});
-			setValue("items", items);
-			setValue("clientId", invoiceToEdit.clientId);
-			setValue("invoiceNumber", invoiceToEdit.number);
-			setValue("issueDate", convertToDateString(invoiceToEdit.issueDate));
-			setValue("dueDate", convertToDateString(invoiceToEdit.dueDate));
-			setValue("notes", invoiceToEdit.notes || "");
-			setValue("status", invoiceToEdit.status);
-			setValue("discount", invoiceToEdit.discount.toString());
-			setValue("tax", invoiceToEdit.tax.toString());
-			setValue("subtotal", invoiceToEdit.subtotal.toString());
-			setValue("total", invoiceToEdit.total.toString());
-			setValue("paidTotal", invoiceToEdit.paidTotal.toString());
-			setValue("paymentTerm", invoiceToEdit.paymentTerm);
-		}
-	}, [invoiceToEdit, isEditing]);
-	/*============================================Editing Logic============================================*/
-
 	return (
 		<>
 			<form
@@ -210,7 +198,7 @@ export default function InvoiceForm() {
 				<div className="w-full px-4 py-6">
 					<div className="grid grid-cols-12 gap-4 border-0 rounded-none">
 						<InvoiceBasicInfo
-							clients={clients}
+							clients={clients as any}
 							isLoadingClients={loading.clients}
 							register={register}
 							errors={errors}
@@ -261,7 +249,6 @@ export default function InvoiceForm() {
 				onClose={() => setIsModalOpen(false)}
 				onSubmit={() => {
 					setIsModalOpen(false);
-					// Optionally refresh clients list here
 				}}
 			/>
 		</>

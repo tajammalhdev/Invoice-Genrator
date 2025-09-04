@@ -43,10 +43,8 @@ export default function ItemListItem({
 		useWatch({ control, name: `items.${index}` }) || {};
 
 	useEffect(() => {
-		const total =
-			(parseFloat(quantity.toString()) || 0) *
-			(parseFloat(unitPrice.toString()) || 0);
-		setCustomValue(`items.${index}.total`, total.toFixed(2).toString());
+		const total = (Number(quantity) || 0) * (Number(unitPrice) || 0);
+		setCustomValue(`items.${index}.total`, Number(total.toFixed(2)));
 	}, [quantity, unitPrice, index, setCustomValue]);
 
 	return (
@@ -84,9 +82,11 @@ export default function ItemListItem({
 
 			{/* Quantity */}
 			<TableCell className="px-4 py-3 text-center">
-				<FormInput
-					name={`items.${index}.quantity`}
-					register={register}
+				<Input
+					{...register(`items.${index}.quantity`, {
+						required: true,
+						valueAsNumber: true,
+					})}
 					placeholder="0"
 					required
 					type="text"
@@ -100,9 +100,11 @@ export default function ItemListItem({
 
 			{/* Unit Price */}
 			<TableCell className="px-4 py-3 text-right">
-				<FormInput
-					name={`items.${index}.unitPrice`}
-					register={register}
+				<Input
+					{...register(`items.${index}.unitPrice`, {
+						required: true,
+						valueAsNumber: true,
+					})}
 					placeholder="0.00"
 					required
 					type="text"
@@ -116,7 +118,7 @@ export default function ItemListItem({
 
 			{/* Total */}
 			<TableCell className="px-4 py-3 text-left font-medium text-gray-900 dark:text-white">
-				{currency} {watch(`items.${index}.total`)}
+				{currency} {Number(watch(`items.${index}.total`)).toFixed(2)}
 			</TableCell>
 
 			{/* Actions */}

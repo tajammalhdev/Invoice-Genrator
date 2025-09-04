@@ -1,6 +1,9 @@
+"use client";
+
+import { useEffect } from "react";
 import InvoiceForm from "../../components/_invoices/InvoiceForm";
-import { InvoiceProvider } from "@/hooks/invoice";
+import { useInvoiceActions } from "@/hooks/invoice/InvoiceContext";
 
 export default function CreateInvoice() {
-	return <InvoiceForm />;
+	return <InvoiceForm type="create" />;
 }

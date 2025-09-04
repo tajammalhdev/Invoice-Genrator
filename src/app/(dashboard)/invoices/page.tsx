@@ -11,8 +11,71 @@ import {
 import { Plus, Search } from "lucide-react";
 import InvoicePage from "../components/_invoices/InvoicePage";
 import { SiteHeader } from "../components/_dashboard/SiteHeader";
+import TableSearch from "../components/_shared/TableSearch";
+import { Prisma } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import { ITEM_PER_PAGE } from "@/lib/utils";
 
-export default function Invoice() {
+export default async function Invoice({
+	searchParams,
+}: {
+	searchParams: { [key: string]: string | undefined };
+}) {
+	const { page, ...queryParams } = searchParams;
+
+	const p = page ? parseInt(page) : 1;
+
+	// URL PARAMS CONDITION
+
+	const query: Prisma.InvoiceWhereInput = {};
+	const clientQuery: Prisma.ClientWhereInput = {};
+
+	if (queryParams) {
+		for (const [key, value] of Object.entries(queryParams)) {
+			if (value !== undefined) {
+				switch (key) {
+					case "clientId":
+						query.clientId = {
+							equals: value,
+						};
+						break;
+					case "name":
+						clientQuery.name = { contains: value, mode: "insensitive" };
+						break;
+					case "email":
+						clientQuery.email = { contains: value, mode: "insensitive" };
+						break;
+					case "phone":
+						clientQuery.phone = { contains: value, mode: "insensitive" };
+						break;
+					case "search":
+						query.number = { contains: value, mode: "insensitive" };
+						break;
+					default:
+						break;
+				}
+			}
+		}
+	}
+	// Add client query if any client filters are applied
+	if (Object.keys(clientQuery).length > 0) {
+		query.client = clientQuery;
+	}
+
+	const [data, count] = await prisma.$transaction([
+		prisma.invoice.findMany({
+			where: query,
+			include: {
+				client: true,
+				items: true,
+				payments: true,
+			},
+			take: ITEM_PER_PAGE,
+			skip: ITEM_PER_PAGE * (p - 1),
+		}),
+		prisma.invoice.count({ where: query }),
+	]);
+
 	return (
 		<>
 			<SiteHeader>
@@ -21,35 +84,8 @@ export default function Invoice() {
 					New Invoice
 				</Button>
 			</SiteHeader>
-
 			<div className="w-full h-full min-h-[calc(100vh-10rem)] px-4 py-6 ">
-				{/* Filters and Search */}
-				<Card className="mt-5 shadow-none rounded-none">
-					<CardContent className="p-4 ">
-						<div className="flex flex-col sm:flex-row gap-4">
-							<div className="relative flex-1">
-								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-								<Input
-									placeholder="Search invoices, clients..."
-									className="pl-10"
-								/>
-							</div>
-							<Select>
-								<SelectTrigger className="w-[180px]">
-									<SelectValue placeholder="Filter by status" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">All Statuses</SelectItem>
-									<SelectItem value="DRAFT">Draft</SelectItem>
-									<SelectItem value="PENDING">Pending</SelectItem>
-									<SelectItem value="PAID">Paid</SelectItem>
-									<SelectItem value="OVERDUE">Overdue</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-					</CardContent>
-				</Card>
-				<InvoicePage />
+				<InvoicePage data={data} count={count} />
 			</div>
 		</>
 	);

@@ -32,12 +32,5 @@ export default function InvoicePage({ params }: InvoicePageProps) {
 		return null; // or a simple loading indicator
 	}
 
-	// Example of editing functionality
-	const handleSaveInvoice = () => {
-		// Save logic here
-	};
-
-	const handleCancelEdit = () => {};
-
-	return <InvoiceForm />;
+	return <InvoiceForm type="edit" data={invoice} />;
 }

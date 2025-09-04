@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
-
+export const ITEM_PER_PAGE = 10;
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }

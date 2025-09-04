@@ -38,6 +38,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				<NavMain items={data.navMain} />
 				<NavDocuments items={data.documents} />
 				<NavSecondary items={data.navSecondary} className="mt-auto" />
+				<ThemeSwitcher />
 			</SidebarContent>
 			<SidebarFooter>{/* <ThemeSwitcher /> */}</SidebarFooter>
 		</Sidebar>

@@ -27,6 +27,8 @@ import {
 	ArrowDown,
 	ChevronDown,
 	Mail,
+	FilterIcon,
+	PlusIcon,
 } from "lucide-react";
 import {
 	DropdownMenu,
@@ -39,12 +41,20 @@ import SendInvoiceEmailDialog from "./SendInvoiceEmailDialog";
 import { Invoice } from "@prisma/client";
 import { redirect, useRouter } from "next/navigation";
 import Link from "next/link";
+import TableSearch from "../_shared/TableSearch";
+import { useState } from "react";
 
-export default function InvoicePage() {
-	const [invoices] = useInvoices();
-	const [loading] = useLoading();
+export default function InvoicePage({
+	data,
+	count,
+}: {
+	data: Invoice[];
+	count: number;
+}) {
+	const [invoices] = useState(data);
 	const [companySettings] = useCompanySettings();
 	const { downloadInvoicePDF } = useInvoiceActions();
+
 	const {
 		selectedInvoice,
 		isEmailDialogOpen,
@@ -93,17 +103,32 @@ export default function InvoicePage() {
 		<>
 			<Card className="mt-5 shadow-none rounded-none">
 				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						All Invoices
-						{loading.invoices ? (
-							<Loader2 className="h-4 w-4 animate-spin" />
-						) : (
-							invoices && (
-								<span className="text-sm font-normal text-muted-foreground">
-									({invoices.length})
-								</span>
-							)
-						)}
+					<CardTitle className="flex items-center gap-2 justify-between">
+						<div className="flex items-center gap-2">
+							All Invoices
+							{false ? (
+								<Loader2 className="h-4 w-4 animate-spin" />
+							) : (
+								invoices && (
+									<span className="text-sm font-normal text-muted-foreground">
+										({invoices.length})
+									</span>
+								)
+							)}
+						</div>
+						<div className="flex items-center gap-2">
+							<TableSearch />
+							<button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+								<FilterIcon className="size-4 shrink-0 opacity-50" />
+							</button>
+							<button
+								className={`w-8 h-8 flex items-center justify-center rounded-full bg-accent-foreground text-white dark:text-black`}
+								onClick={() => {
+									redirect("/invoices/create");
+								}}>
+								<PlusIcon className="size-4 shrink-0 opacity-50" />
+							</button>
+						</div>
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
@@ -127,7 +152,7 @@ export default function InvoicePage() {
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{loading.invoices ? (
+								{false ? (
 									<LoadingRows />
 								) : invoices && invoices.length === 0 ? (
 									<TableRow>
@@ -190,7 +215,7 @@ export default function InvoicePage() {
 														<Button
 															variant="outline"
 															size="sm"
-															className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear">
+															className="bg-primary text-white hover:bg-primary/90 hover:text-white active:bg-primary/90 active:text-white min-w-8 duration-200 ease-linear">
 															Action
 															<ChevronDown className="h-4 w-4 ml-2" />
 														</Button>

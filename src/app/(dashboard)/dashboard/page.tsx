@@ -11,7 +11,7 @@ export default async function Dashboard() {
 	return (
 		<>
 			<QuickStats />
-			<div className="px-4 lg:px-6">
+			<div className="px-4 lg:px-6 mb-5">
 				<RecentActivityFeed />
 			</div>
 			<div className="px-4 lg:px-6">
