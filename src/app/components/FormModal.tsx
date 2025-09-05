@@ -15,6 +15,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 const ClientForm = dynamic(() => import("./forms/ClientForm"), {
 	loading: () => <h1>Loading...</h1>,
@@ -93,9 +94,11 @@ const FormModal = ({
 
 	return (
 		<Sheet open={open} onOpenChange={setOpen}>
-			<button
+			<Button
 				className={`${size} flex items-center justify-center rounded-full ${bgColor}`}
-				onClick={() => setOpen(true)}>
+				onClick={() => setOpen(true)}
+				variant="outline"
+				size="icon">
 				{type === "create" && (
 					<PlusIcon className="size-4 shrink-0 opacity-50" />
 				)}
@@ -105,7 +108,7 @@ const FormModal = ({
 				{type === "delete" && (
 					<Trash2Icon className="size-4 shrink-0 opacity-50" />
 				)}
-			</button>
+			</Button>
 			<SheetContent side="right" className="w-[400px] sm:max-w-[400px] p-5">
 				<SheetHeader>
 					<SheetTitle className="capitalize">

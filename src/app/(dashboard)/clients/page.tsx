@@ -1,25 +1,11 @@
 import prisma from "@/lib/prisma";
-import ClientList from "../components/_clients/ClientList";
 import { Prisma } from "@prisma/client";
-import { copyToClipboard, ITEM_PER_PAGE } from "@/lib/utils";
+import { ITEM_PER_PAGE } from "@/lib/utils";
 import { SiteHeader } from "../components/_dashboard/SiteHeader";
-import { Button } from "@/components/ui/button";
-import {
-	Eye,
-	Copy,
-	Edit,
-	Plus,
-	Trash2,
-	Loader2,
-	FilterIcon,
-	PlusIcon,
-	Link,
-} from "lucide-react";
-import { ColumnDef } from "@tanstack/react-table";
+import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TableSearch from "../components/_shared/TableSearch";
 import FormContainer from "@/app/components/FormContainer";
-import { redirect } from "next/navigation";
 import Table from "@/app/components/Table";
 
 export default async function Clients({
@@ -80,6 +66,7 @@ export default async function Clients({
 			header: "Company",
 			accessor: "company",
 		},
+
 		{
 			header: "City",
 			accessor: "city",
@@ -90,7 +77,7 @@ export default async function Clients({
 		},
 		{
 			header: "Total Invoices",
-			accessor: "invoices.length",
+			accessor: "invoices",
 		},
 		{
 			header: "Actions",
@@ -112,14 +99,10 @@ export default async function Clients({
 				<td className="hidden md:table-cell">{item.company}</td>
 				<td className="hidden md:table-cell">{item.city}</td>
 				<td className="hidden md:table-cell">{item.phone}</td>
-				<td className="hidden md:table-cell">{item.address}</td>
+				<td className="hidden md:table-cell">{item.invoices.length}</td>
 				<td>
 					<div className="flex items-center gap-2">
-						<Link href={`/clients/${item.id}`}>
-							<button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky">
-								<Eye className="size-4 shrink-0 opacity-50" />
-							</button>
-						</Link>
+						<FormContainer table="client" type="update" id={item.id} />
 						<FormContainer table="client" type="delete" id={item.id} />
 					</div>
 				</td>

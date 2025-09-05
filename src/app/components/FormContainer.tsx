@@ -14,8 +14,16 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
 	switch (table) {
 		case "client":
 			const clients = await prisma.client.findMany({
-				select: { id: true, name: true },
+				select: {
+					id: true,
+					name: true,
+					company: true,
+					city: true,
+					phone: true,
+					email: true,
+				},
 			});
+			relatedData = clients;
 			break;
 		default:
 			break;

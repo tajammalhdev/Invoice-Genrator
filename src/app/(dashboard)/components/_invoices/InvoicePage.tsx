@@ -121,13 +121,15 @@ export default function InvoicePage({
 							<button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
 								<FilterIcon className="size-4 shrink-0 opacity-50" />
 							</button>
-							<button
-								className={`w-8 h-8 flex items-center justify-center rounded-full bg-accent-foreground text-white dark:text-black`}
+							<Button
+								className={` flex items-center justify-center rounded-full bg-lamaYellow`}
+								variant="outline"
+								size="icon"
 								onClick={() => {
 									redirect("/invoices/create");
 								}}>
 								<PlusIcon className="size-4 shrink-0 opacity-50" />
-							</button>
+							</Button>
 						</div>
 					</CardTitle>
 				</CardHeader>

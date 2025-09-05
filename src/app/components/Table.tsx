@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 const Table = ({
 	columns,
 	renderRow,
@@ -10,9 +12,14 @@ const Table = ({
 	return (
 		<table className="w-full mt-2">
 			<thead>
-				<tr className="text-left text-gray-500 text-sm">
+				<tr className="p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px] text-left text-sm">
 					{columns.map((col) => (
-						<th key={col.accessor} className={col.className}>
+						<th
+							key={col.accessor}
+							className={cn(
+								"p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+								col.className,
+							)}>
 							{col.header}
 						</th>
 					))}
