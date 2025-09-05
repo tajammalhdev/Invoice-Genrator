@@ -18,14 +18,7 @@ export default async function DashboardLayout({
 				<div className="flex flex-1 flex-col">
 					<div className="@container/main flex flex-1 flex-col gap-2">
 						<div className="flex flex-col  py-2 pt-0">
-							<Suspense
-								fallback={
-									<div className="flex h-full w-full items-center justify-center content-center">
-										Loading...
-									</div>
-								}>
-								<InvoiceProvider>{children}</InvoiceProvider>
-							</Suspense>
+							<InvoiceProvider>{children}</InvoiceProvider>
 						</div>
 					</div>
 				</div>

@@ -17,7 +17,6 @@ import InvoiceDetailsSection from "./InvoiceDetailsSection";
 import ItemList from "./ItemList";
 import ItemListItem from "./ItemListItem";
 import InvoiceSummary from "./InvoiceSummary";
-import AddClientModel from "../_clients/AddClientModel";
 import { Invoice, InvoiceItem } from "@prisma/client";
 import { toast } from "sonner";
 import { useInvoiceContext } from "@/hooks/invoice/InvoiceContext";
@@ -38,7 +37,6 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 	const [companySettings] = useCompanySettings();
 	const { loading } = useInvoiceContext();
 	const [discountType] = useAtom(discountTypeAtom);
-	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const {
 		register,
@@ -203,7 +201,7 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 							register={register}
 							errors={errors}
 							setCustomValue={setCustomValue}
-							onAddClient={() => setIsModalOpen(true)}
+							onAddClient={() => {}}
 							watch={watch}
 						/>
 						<InvoiceDetailsSection
@@ -244,13 +242,6 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 					/>
 				</div>
 			</form>
-			<AddClientModel
-				isOpen={isModalOpen}
-				onClose={() => setIsModalOpen(false)}
-				onSubmit={() => {
-					setIsModalOpen(false);
-				}}
-			/>
 		</>
 	);
 }
