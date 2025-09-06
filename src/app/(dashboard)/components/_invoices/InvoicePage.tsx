@@ -41,7 +41,7 @@ import SendInvoiceEmailDialog from "./SendInvoiceEmailDialog";
 import { Invoice } from "@prisma/client";
 import { redirect, useRouter } from "next/navigation";
 import Link from "next/link";
-import TableSearch from "../_shared/TableSearch";
+import TableSearch from "../../../components/TableSearch";
 import { useState } from "react";
 
 export default function InvoicePage({

@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { Clients, PaymentSchemaValidation } from "@/lib/zodSchemas";
-type CurrentState = { success: boolean; error: boolean };
+type CurrentState = { success: boolean; error: unknown };
 
 export const deleteClient = async (
 	currentState: CurrentState,
@@ -76,7 +76,6 @@ export const createPayment = async (
 	currentState: CurrentState,
 	data: PaymentSchemaValidation,
 ) => {
-	const session = await auth();
 	try {
 		await prisma.payment.create({
 			data: {
@@ -85,14 +84,14 @@ export const createPayment = async (
 				receivedAt: data.receivedAt,
 				invoice: {
 					connect: {
-						id: data.invoiceId,
+						number: data.invoiceId,
 					},
 				},
 			},
 		});
 		return { success: true, error: false };
 	} catch (err) {
-		return { success: false, error: true };
+		return { success: false, error: err };
 	}
 };
 
@@ -112,9 +111,25 @@ export const updatePayment = async (
 				receivedAt: data.receivedAt,
 				invoice: {
 					connect: {
-						id: data.invoiceId,
+						number: data.invoiceId,
 					},
 				},
+			},
+		});
+		return { success: true, error: false };
+	} catch (err) {
+		return { success: false, error: true };
+	}
+};
+export const deletePayment = async (
+	currentState: CurrentState,
+	data: FormData,
+) => {
+	try {
+		const id = data.get("id") as string;
+		await prisma.payment.delete({
+			where: {
+				id: id,
 			},
 		});
 		return { success: true, error: false };

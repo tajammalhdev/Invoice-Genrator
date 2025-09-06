@@ -23,31 +23,34 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
 			}
 			break;
 		case "payment":
-			if (!id) {
-				const invoices = await prisma.invoice.findMany({
-					select: {
-						number: true,
-						payments: {
-							select: {
-								id: true,
-								amount: true,
-								method: true,
-								receivedAt: true,
-							},
+			const invoices = await prisma.invoice.findMany({
+				select: {
+					number: true,
+					payments: {
+						select: {
+							id: true,
+							amount: true,
+							method: true,
+							receivedAt: true,
 						},
 					},
-				});
-				relatedData = {
-					invoices: invoices,
-				};
-			}
+				},
+			});
+
 			if (id) {
 				const payment = await prisma.payment.findUnique({
 					where: {
 						id: id as string,
 					},
 				});
-				relatedData = payment;
+				relatedData = {
+					...payment,
+					invoices: invoices,
+				};
+			} else {
+				relatedData = {
+					invoices: invoices,
+				};
 			}
 			break;
 		default:

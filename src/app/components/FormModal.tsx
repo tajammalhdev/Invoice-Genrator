@@ -7,7 +7,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useActionState } from "react";
 import { FormContainerProps } from "./FormContainer";
 import { toast } from "sonner";
-import { deleteClient } from "../../../actions/actions";
+import { deleteClient, deletePayment } from "../../../actions/actions";
 import { EditIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import {
 	Sheet,
@@ -24,6 +24,7 @@ const ClientForm = dynamic(() => import("./forms/ClientForm"), {
 
 const deleteActionMap = {
 	client: deleteClient,
+	payment: deletePayment,
 };
 const forms: {
 	[key: string]: (

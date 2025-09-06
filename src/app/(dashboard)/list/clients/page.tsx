@@ -1,10 +1,10 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { ITEM_PER_PAGE } from "@/lib/utils";
-import { SiteHeader } from "../components/_dashboard/SiteHeader";
+import SiteHeader from "../../components/_dashboard/SiteHeader";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import TableSearch from "../components/_shared/TableSearch";
+import TableSearch from "../../../components/TableSearch";
 import FormContainer from "@/app/components/FormContainer";
 import Table from "@/app/components/Table";
 

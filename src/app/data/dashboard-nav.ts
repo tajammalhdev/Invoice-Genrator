@@ -126,12 +126,12 @@ export const data = {
 		},
 		{
 			title: "Clients",
-			url: "/clients",
+			url: "/list/clients",
 			icon: IconUsers,
 		},
 		{
 			title: "Payments",
-			url: "/payments",
+			url: "/list/payments",
 			icon: IconMoneybag,
 		},
 		{

@@ -155,7 +155,7 @@ model InvoiceItem {
 model Payment {
   id         String   @id @default(cuid())
   invoiceId  String
-  invoice    Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice    Invoice  @relation(fields: [invoiceId], references: [number], onDelete: Cascade)
   amount     Float    @default(0)
   method     String?
   receivedAt DateTime @default(now())

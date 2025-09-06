@@ -9,12 +9,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search } from "lucide-react";
-import InvoicePage from "../components/_invoices/InvoicePage";
-import { SiteHeader } from "../components/_dashboard/SiteHeader";
-import TableSearch from "../components/_shared/TableSearch";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/utils";
+import SiteHeader from "../../components/_dashboard/SiteHeader";
+import InvoicePage from "../../components/_invoices/InvoicePage";
 
 export default async function Invoice({
 	searchParams,

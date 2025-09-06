@@ -1,12 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SiteHeader } from "../components/_dashboard/SiteHeader";
-import TableSearch from "../components/_shared/TableSearch";
 import { Loader2 } from "lucide-react";
 import FormContainer from "@/app/components/FormContainer";
 import Table from "@/app/components/Table";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/utils";
+import SiteHeader from "../../components/_dashboard/SiteHeader";
+import TableSearch from "@/app/components/TableSearch";
 
 export default async function PaymentsPage({
 	searchParams,
@@ -71,9 +71,9 @@ export default async function PaymentsPage({
 		return (
 			<tr
 				key={item.id}
-				className="border-b border-gray-200/50 even:bg-primary-50 text-sm hover:bg-lamaPurpleLight">
+				className="border-b border-gray-200/50 even:bg-primary-50 text-sm hover:bg-lamaPurpleLight w-full">
 				<td className="p-2">
-					<h3 className="font-semibold">{item.invoice.id}</h3>
+					<h3 className="font-semibold">{item.invoiceId}</h3>
 				</td>
 				<td className="hidden md:table-cell p-2">{item.amount}</td>
 				<td className="hidden md:table-cell p-2">{item.method}</td>

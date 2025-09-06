@@ -7,13 +7,13 @@ import ThemeSwitcher from "@/app/components/ThemeSwitcher";
 import { usePathname } from "next/navigation";
 import { getPageTitle } from "@/app/data/dashboard-nav";
 import { Save, X } from "lucide-react";
-import { DynamicBreadcrumb } from "../_shared/DynamicBreadcrumb";
+import { DynamicBreadcrumb } from "../../../components/DynamicBreadcrumb";
 
 interface SiteHeaderProps {
 	children?: React.ReactNode;
 }
 
-export function SiteHeader({ children }: SiteHeaderProps) {
+export default function SiteHeader({ children }: SiteHeaderProps) {
 	const pathname = usePathname();
 	const pageTitle = getPageTitle(pathname);
 

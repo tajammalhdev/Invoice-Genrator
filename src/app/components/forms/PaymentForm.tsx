@@ -43,9 +43,13 @@ export default function PaymentForm({
 		formState: { errors },
 	} = useForm({
 		resolver: zodResolver(PaymentSchema),
-		defaultValues: relatedData,
+		defaultValues: {
+			...relatedData,
+			receivedAt: relatedData?.receivedAt
+				? new Date(relatedData.receivedAt).toISOString().split("T")[0]
+				: "",
+		},
 	});
-
 	const [state, formAction, isSubmitting] = useActionState(
 		type === "create" ? createPayment : updatePayment,
 		{
@@ -62,7 +66,7 @@ export default function PaymentForm({
 	const router = useRouter();
 	useEffect(() => {
 		if (state.success) {
-			toast(`Client has been ${type === "create" ? "created" : "updated"}!`);
+			toast(`Payment has been ${type === "create" ? "created" : "updated"}!`);
 			setOpen(false);
 			router.refresh();
 		}
