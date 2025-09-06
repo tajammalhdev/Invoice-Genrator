@@ -4,8 +4,17 @@ import { ClientSchema, Clients } from "@/lib/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Client } from "@prisma/client";
 import { FormInput } from "lucide-react";
-import { Dispatch, SetStateAction } from "react";
+import {
+	Dispatch,
+	SetStateAction,
+	useActionState,
+	useEffect,
+	startTransition,
+} from "react";
 import { useForm } from "react-hook-form";
+import { createClient, updateClient } from "../../../../actions/actions";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface ClientFormProps {
 	type: "create" | "update";
@@ -21,10 +30,34 @@ const ClientForm = ({ type, data, setOpen, relatedData }: ClientFormProps) => {
 		formState: { errors },
 	} = useForm<Clients>({
 		resolver: zodResolver(ClientSchema),
+		defaultValues: relatedData,
 	});
 
+	const [state, formAction, isSubmitting] = useActionState(
+		type === "create" ? createClient : updateClient,
+		{
+			success: false,
+			error: false,
+		},
+	);
+
+	const onSubmit = (data: Clients) => {
+		startTransition(() => {
+			formAction({ ...data });
+		});
+	};
+
+	const router = useRouter();
+	useEffect(() => {
+		if (state.success) {
+			toast(`Client has been ${type === "create" ? "created" : "updated"}!`);
+			setOpen(false);
+			router.refresh();
+		}
+	}, [state, router, type, setOpen]);
+
 	return (
-		<form className="space-y-6">
+		<form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
 			{/* Basic Information */}
 			<div className="space-y-4">
 				<h3 className="text-sm font-medium text-muted-foreground border-b pb-2">
@@ -32,7 +65,7 @@ const ClientForm = ({ type, data, setOpen, relatedData }: ClientFormProps) => {
 				</h3>
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div className="space-y-2">
-						<Input name="name" placeholder="Client name" required />
+						<Input placeholder="Client name" required {...register("name")} />
 					</div>
 					<div className="space-y-2">
 						<Input
@@ -103,8 +136,8 @@ const ClientForm = ({ type, data, setOpen, relatedData }: ClientFormProps) => {
 
 			{/* Form Actions */}
 			<div className="flex gap-3 pt-4 border-t">
-				<Button type="submit" className="flex-1">
-					Submit
+				<Button type="submit" className="flex-1" disabled={isSubmitting}>
+					{isSubmitting ? "Submitting..." : "Submit"}
 				</Button>
 			</div>
 		</form>

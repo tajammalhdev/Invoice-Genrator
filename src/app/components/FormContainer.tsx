@@ -9,27 +9,22 @@ export type FormContainerProps = {
 };
 
 const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
-	let relatedData = {};
+	let relatedData: any = null;
 
 	switch (table) {
 		case "client":
-			const clients = await prisma.client.findMany({
-				select: {
-					id: true,
-					name: true,
-					company: true,
-					city: true,
-					phone: true,
-					email: true,
-				},
-			});
-			relatedData = clients;
+			if (id) {
+				const client = await prisma.client.findUnique({
+					where: {
+						id: id as string,
+					},
+				});
+				relatedData = client;
+			}
 			break;
 		default:
 			break;
 	}
-	console.log(table);
-
 	return (
 		<div className="">
 			<FormModal

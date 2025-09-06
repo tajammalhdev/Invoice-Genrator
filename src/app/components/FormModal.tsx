@@ -110,7 +110,7 @@ const FormModal = ({
 				)}
 			</Button>
 			<SheetContent side="right" className="w-[400px] sm:max-w-[400px] p-5">
-				<SheetHeader>
+				<SheetHeader className="mb-4 px-0">
 					<SheetTitle className="capitalize">
 						{type} {table}
 					</SheetTitle>
