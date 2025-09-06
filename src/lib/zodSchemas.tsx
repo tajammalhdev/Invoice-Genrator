@@ -130,10 +130,15 @@ export const ItemSchema = z.object({
 	total: z.number().refine((val) => val >= 0, "Total must be 0 or greater"),
 });
 
-const PaymentSchema = z.object({
+export const PaymentSchema = z.object({
+	id: z.string().min(1, "ID is required").optional(),
+	invoiceId: z.string().min(1, "Invoice ID is required"),
 	amount: z.string().min(1, "Payment amount is required"),
 	method: z.string().min(1, "Payment method is required"),
-	receivedAt: z.date({ message: "Payment date is required" }),
+	receivedAt: z
+		.string()
+		.min(1, { message: "Payment date is required" })
+		.transform((val) => new Date(val)),
 });
 
 export const InvoiceDetailsSchema = z.object({
@@ -166,7 +171,7 @@ export const InvoiceDetailsSchema = z.object({
 
 export type InvoiceDetails = z.infer<typeof InvoiceDetailsSchema>;
 export type Item = z.infer<typeof ItemSchema>;
-
+export type PaymentSchemaValidation = z.infer<typeof PaymentSchema>;
 // Client Schema
 export const ClientSchema = z.object({
 	id: z.string().min(1, "ID is required").optional(),

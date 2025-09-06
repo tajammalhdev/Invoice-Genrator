@@ -131,7 +131,7 @@ export const data = {
 		},
 		{
 			title: "Payments",
-			url: "#",
+			url: "/payments",
 			icon: IconMoneybag,
 		},
 		{

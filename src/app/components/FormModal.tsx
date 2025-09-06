@@ -16,6 +16,7 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import PaymentForm from "./forms/PaymentForm";
 
 const ClientForm = dynamic(() => import("./forms/ClientForm"), {
 	loading: () => <h1>Loading...</h1>,
@@ -34,6 +35,14 @@ const forms: {
 } = {
 	client: (setOpen, type, data, relatedData) => (
 		<ClientForm
+			setOpen={setOpen}
+			type={type}
+			data={data}
+			relatedData={relatedData}
+		/>
+	),
+	payment: (setOpen, type, data, relatedData) => (
+		<PaymentForm
 			setOpen={setOpen}
 			type={type}
 			data={data}
@@ -60,10 +69,14 @@ const FormModal = ({
 	const [open, setOpen] = useState(false);
 
 	const Form = () => {
-		const [state, formAction] = useActionState(deleteActionMap[table], {
-			success: false,
-			error: false,
-		});
+		const [state, formAction] = useActionState(
+			deleteActionMap[table as keyof typeof deleteActionMap] ||
+				(() => Promise.resolve({ success: false, error: false })),
+			{
+				success: false,
+				error: false,
+			},
+		);
 
 		const router = useRouter();
 
