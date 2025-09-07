@@ -14,46 +14,36 @@ datasource db {
 }
 
 model User {
-  id            String          @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String          @unique
+  email         String    @unique
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
-  // Optional for WebAuthn support
-  Authenticator Authenticator[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  clients       Client[]
-  invoices      Invoice[]
-  settings      Setting?
-}
 
-model Setting {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  companyName  String
-  companyEmail String
+  companyName  String  @default("")
+  companyEmail String  @default("")
   companyPhone String?
   addressLine1 String?
   addressLine2 String?
   city         String?
   state        String?
-  postalCode   String?
+  zip          String?
   country      String?
 
-  currencyCode      String  @default("USD")
-  dateFormat        String  @default("yyyy-MM-dd")
-  taxRate           Float   @default(0)
-  invoicePrefix     String  @default("INV-")
-  nextInvoiceNumber Int     @default(1)
+  currency          String          @default("USD")
+  dateFormat        String          @default("yyyy-MM-dd")
+  taxRate           Float           @default(0)
+  invoicePrefix     String          @default("INV-")
+  nextInvoiceNumber Int             @default(1)
   logoUrl           String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Optional for WebAuthn support
+  Authenticator     Authenticator[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  clients           Client[]
+  invoices          Invoice[]
 }
 
 model Account {

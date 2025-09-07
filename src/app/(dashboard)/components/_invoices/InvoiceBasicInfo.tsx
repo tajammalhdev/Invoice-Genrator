@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,16 +16,6 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import {
-	UseFormRegisterReturn,
-	FieldErrors,
-	UseFormWatch,
-} from "react-hook-form";
-import { InvoiceDetails } from "@/lib/zodSchemas";
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { cn, convertToDateString } from "@/lib/utils";
-import { PaymentTerm } from "@/lib/zodSchemas";
 import {
 	Select,
 	SelectContent,
@@ -34,6 +23,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import {
+	UseFormRegisterReturn,
+	FieldErrors,
+	UseFormWatch,
+} from "react-hook-form";
+import { InvoiceDetails, PaymentTerm } from "@/lib/zodSchemas";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { cn, convertToDateString } from "@/lib/utils";
 
 interface Client {
 	id: string;
@@ -52,6 +50,53 @@ interface InvoiceBasicInfoProps {
 	watch: UseFormWatch<InvoiceDetails>;
 }
 
+// Reusable form field component
+const FormField = ({
+	label,
+	children,
+	error,
+	className = "",
+}: {
+	label: string;
+	children: React.ReactNode;
+	error?: string;
+	className?: string;
+}) => (
+	<div
+		className={`sm:grid sm:gap-10 flex flex-col lg:flex-row px-5 sm:px-6 py-4 sm:py-3 lg:items-center sm:grid-cols-3 ${className}`}>
+		<dt className="text-sm flex flex-col">
+			<Label htmlFor={label.toLowerCase().replace(/\s+/g, "")}>{label}</Label>
+		</dt>
+		<dd className="mt-3 text-sm sm:mt-0 sm:col-span-2">
+			{children}
+			{error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+		</dd>
+	</div>
+);
+
+// Date input component
+const DateInput = ({
+	name,
+	register,
+	setCustomValue,
+	defaultValue,
+	error,
+}: {
+	name: string;
+	register: any;
+	setCustomValue: (id: string, value: any) => void;
+	defaultValue: string;
+	error?: string;
+}) => (
+	<input
+		type="date"
+		{...register(name)}
+		defaultValue={defaultValue}
+		className="w-full py-2 px-3 rounded-md text-sm disabled:opacity-75 disabled:cursor-not-allowed border border-gray-300"
+		onChange={(e) => setCustomValue(name, e.target.value)}
+	/>
+);
+
 export default function InvoiceBasicInfo({
 	clients,
 	isLoadingClients,
@@ -61,34 +106,27 @@ export default function InvoiceBasicInfo({
 	onAddClient,
 	watch,
 }: InvoiceBasicInfoProps) {
-	const [open, setOpen] = useState(false);
-	const [selectedClientId, setSelectedClientId] = useState<string>("");
-
-	// Stable default date values to prevent infinite loops
+	const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
+	const clientId = watch("clientId");
 	const today = useMemo(() => convertToDateString(new Date()), []);
 
-	const clientId = watch("clientId");
+	const selectedClient = useMemo(
+		() => clients.find((client) => client.id === clientId),
+		[clients, clientId],
+	);
 
-	// Sync selectedClientId with form clientId when it changes
-	useEffect(() => {
-		if (clientId && clientId !== selectedClientId) {
-			setSelectedClientId(clientId);
-		}
-	}, [clientId, selectedClientId]);
-
-	// Memoize setCustomValue calls to prevent infinite loops
 	const handleClientSelect = useCallback(
-		(clientId: string) => {
-			setSelectedClientId(clientId);
-			setCustomValue("clientId", clientId);
-			setOpen(false);
+		(selectedClientId: string) => {
+			setCustomValue("clientId", selectedClientId);
+			setIsClientDropdownOpen(false);
 		},
 		[setCustomValue],
 	);
 
-	const selectedClient = clients.find(
-		(client) => client.id === selectedClientId,
-	);
+	const handleAddClient = useCallback(() => {
+		setIsClientDropdownOpen(false);
+		onAddClient?.();
+	}, [onAddClient]);
 
 	return (
 		<>
@@ -96,13 +134,14 @@ export default function InvoiceBasicInfo({
 			<Card className="w-full shadow-none rounded-none col-span-12 xl:col-span-4 h-max">
 				<CardContent className="px-5 sm:px-6 py-4 sm:py-3">
 					<Label htmlFor="clientId">Client</Label>
-
-					<Popover open={open} onOpenChange={setOpen}>
+					<Popover
+						open={isClientDropdownOpen}
+						onOpenChange={setIsClientDropdownOpen}>
 						<PopoverTrigger asChild>
 							<Button
 								variant="outline"
 								role="combobox"
-								aria-expanded={open}
+								aria-expanded={isClientDropdownOpen}
 								className="w-full mt-2 justify-between"
 								disabled={isLoadingClients}>
 								{isLoadingClients ? (
@@ -128,13 +167,11 @@ export default function InvoiceBasicInfo({
 											<CommandItem
 												key={client.id}
 												value={`${client.name} ${client.company || ""}`}
-												onSelect={() => {
-													handleClientSelect(client.id);
-												}}>
+												onSelect={() => handleClientSelect(client.id)}>
 												<Check
 													className={cn(
 														"mr-2 h-4 w-4",
-														selectedClientId === client.id
+														clientId === client.id
 															? "opacity-100"
 															: "opacity-0",
 													)}
@@ -152,15 +189,10 @@ export default function InvoiceBasicInfo({
 									</CommandGroup>
 								</CommandList>
 							</Command>
-
-							{/* Add Client Option - Outside Command component */}
 							<div className="border-t p-2">
 								<Button
 									variant="ghost"
-									onClick={() => {
-										setOpen(false);
-										onAddClient?.();
-									}}
+									onClick={handleAddClient}
 									className="w-full justify-start text-black-600 hover:text-blue-700 hover:bg-blue-50">
 									<Plus className="mr-2 h-4 w-4" />
 									Add New Client
@@ -168,7 +200,6 @@ export default function InvoiceBasicInfo({
 							</div>
 						</PopoverContent>
 					</Popover>
-
 					{errors.clientId && (
 						<p className="text-sm text-red-500 mt-1">
 							{errors.clientId.message}
@@ -180,76 +211,40 @@ export default function InvoiceBasicInfo({
 			{/* Dates and Payment Terms */}
 			<Card className="w-full shadow-none rounded-none col-span-12 xl:col-span-4 h-max">
 				<CardContent className="px-0">
-					<div className="sm:grid sm:gap-10 flex flex-col lg:flex-row px-5 sm:px-6 py-4 sm:py-3 lg:items-center sm:grid-cols-3">
-						<dt className="text-sm flex flex-col">
-							<Label htmlFor="issueDate">Issue Date</Label>
-						</dt>
-						<dd className="mt-3 text-sm sm:mt-0 sm:col-span-2">
-							<input
-								type="date"
-								{...register("issueDate")}
-								defaultValue={today}
-								className="w-full py-2 px-3 rounded-md text-sm disabled:opacity-75 disabled:cursor-not-allowed undefined border border-gray-300"
-								onChange={(e) => {
-									setCustomValue("issueDate", e.target.value);
-								}}
-							/>
-							{errors.issueDate && (
-								<p className="text-sm text-red-500 mt-1">
-									{errors.issueDate.message}
-								</p>
-							)}
-						</dd>
-					</div>
+					<FormField label="Issue Date" error={errors.issueDate?.message}>
+						<DateInput
+							name="issueDate"
+							register={register}
+							setCustomValue={setCustomValue}
+							defaultValue={today}
+						/>
+					</FormField>
 
-					<div className="sm:grid sm:gap-10 flex flex-col lg:flex-row px-5 sm:px-6 py-4 sm:py-3 lg:items-center sm:grid-cols-3">
-						<dt className="text-sm flex flex-col">
-							<Label htmlFor="dueDate">Due Date</Label>
-						</dt>
-						<dd className="mt-3 text-sm sm:mt-0 sm:col-span-2">
-							<input
-								type="date"
-								{...register("dueDate")}
-								defaultValue={today}
-								className="w-full py-2 px-3 rounded-md text-sm disabled:opacity-75 disabled:cursor-not-allowed undefined border border-gray-300"
-								onChange={(e) => {
-									setCustomValue("dueDate", e.target.value);
-								}}
-							/>
-							{errors.dueDate && (
-								<p className="text-sm text-red-500 mt-1">
-									{errors.dueDate.message}
-								</p>
-							)}
-						</dd>
-					</div>
+					<FormField label="Due Date" error={errors.dueDate?.message}>
+						<DateInput
+							name="dueDate"
+							register={register}
+							setCustomValue={setCustomValue}
+							defaultValue={today}
+						/>
+					</FormField>
 
-					<div className="sm:grid sm:gap-10 flex flex-col lg:flex-row px-5 sm:px-6 py-4 sm:py-3 lg:items-center sm:grid-cols-3">
-						<dt className="text-sm flex flex-col">
-							<Label htmlFor="paymentTerm">Payment Term</Label>
-						</dt>
-						<dd className="mt-3 text-sm sm:mt-0 sm:col-span-2">
-							<Select
-								defaultValue={PaymentTerm.NET30}
-								onValueChange={(value) => setCustomValue("paymentTerm", value)}>
-								<SelectTrigger className="w-full py-2 px-3 rounded-md text-sm border border-gray-300">
-									<SelectValue placeholder="Select a payment term" />
-								</SelectTrigger>
-								<SelectContent>
-									{Object.values(PaymentTerm).map((term) => (
-										<SelectItem key={term} value={term}>
-											{term}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-							{errors.paymentTerm && (
-								<p className="text-sm text-red-500 mt-1">
-									{errors.paymentTerm.message}
-								</p>
-							)}
-						</dd>
-					</div>
+					<FormField label="Payment Term" error={errors.paymentTerm?.message}>
+						<Select
+							defaultValue={PaymentTerm.NET30}
+							onValueChange={(value) => setCustomValue("paymentTerm", value)}>
+							<SelectTrigger className="w-full py-2 px-3 rounded-md text-sm border border-gray-300">
+								<SelectValue placeholder="Select a payment term" />
+							</SelectTrigger>
+							<SelectContent>
+								{Object.values(PaymentTerm).map((term) => (
+									<SelectItem key={term} value={term}>
+										{term}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</FormField>
 				</CardContent>
 			</Card>
 		</>

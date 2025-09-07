@@ -14,7 +14,6 @@ import {
 	Mail,
 } from "lucide-react";
 import Link from "next/link";
-import { SiteHeader } from "../_dashboard/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { useInvoiceActions } from "@/hooks/invoice/InvoiceContext";
 import {
@@ -28,6 +27,7 @@ import SendInvoiceEmailDialog from "./SendInvoiceEmailDialog";
 import { useCompanySettings } from "@/hooks/invoice/InvoiceContext";
 import { useEmailDialog } from "@/hooks/invoice/InvoiceContext";
 import { downloadInvoicePDF } from "@/lib/pdfGenerator";
+import SiteHeader from "../_dashboard/SiteHeader";
 interface InvoiceActionsProps {
 	isSubmitting?: boolean;
 }

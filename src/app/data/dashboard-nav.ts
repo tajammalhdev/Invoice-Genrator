@@ -114,12 +114,12 @@ export const data = {
 		},
 		{
 			title: "Invoices",
-			url: "/invoices",
+			url: "/list/invoices",
 			icon: IconInvoice,
 			items: [
 				{
 					title: "",
-					url: "/invoices/create",
+					url: "/list/invoices/create",
 					icon: IconPlus,
 				},
 			],

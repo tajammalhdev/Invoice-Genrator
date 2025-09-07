@@ -123,16 +123,14 @@ export default function ItemListItem({
 
 			{/* Actions */}
 			<TableCell className="px-4 py-3 text-center w-10">
-				{index !== 0 && (
-					<Button
-						type="button"
-						variant="ghost"
-						size="sm"
-						onClick={() => remove(index)}
-						className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-2 transition-all cursor-pointer dark:hover:bg-red-500 dark:hover:text-white">
-						<Trash2 className="h-4 w-4" />
-					</Button>
-				)}
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					onClick={() => remove(index)}
+					className="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-2 transition-all cursor-pointer dark:hover:bg-red-500 dark:hover:text-white">
+					<Trash2 className="h-4 w-4" />
+				</Button>
 			</TableCell>
 		</TableRow>
 	);

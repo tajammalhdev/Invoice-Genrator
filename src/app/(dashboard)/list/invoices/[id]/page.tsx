@@ -6,7 +6,7 @@ import {
 	useInvoiceContext,
 	useInvoiceActions,
 } from "@/hooks/invoice/InvoiceContext";
-import InvoiceForm from "../../components/_invoices/InvoiceForm";
+import InvoiceForm from "@/app/(dashboard)/components/_invoices/InvoiceForm";
 
 interface InvoicePageProps {
 	params: { id: string };

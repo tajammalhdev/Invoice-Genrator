@@ -2,7 +2,11 @@
 
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { Clients, PaymentSchemaValidation } from "@/lib/zodSchemas";
+import {
+	Clients,
+	PaymentSchemaValidation,
+	InvoiceDetails,
+} from "@/lib/zodSchemas";
 type CurrentState = { success: boolean; error: unknown };
 
 export const deleteClient = async (
