@@ -2,13 +2,20 @@ import prisma from "@/lib/prisma";
 import FormModal from "./FormModal";
 import { auth } from "@/lib/auth";
 export type FormContainerProps = {
-	table: "client" | "payment";
+	table: "client" | "payment" | "invoice";
 	type: "create" | "update" | "delete";
 	data?: any;
 	id?: number | string;
+	label?: string;
 };
 
-const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
+const FormContainer = async ({
+	table,
+	type,
+	data,
+	id,
+	label,
+}: FormContainerProps) => {
 	let relatedData: any = null;
 
 	switch (table) {
@@ -64,6 +71,7 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
 				data={data}
 				id={id}
 				relatedData={relatedData}
+				label={label}
 			/>
 		</div>
 	);

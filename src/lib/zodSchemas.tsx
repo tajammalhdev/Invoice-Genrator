@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { number, z } from "zod";
 
 // Manual enum definitions since Prisma client doesn't include them yet
 const InvoiceStatus = {
@@ -143,7 +143,7 @@ export const PaymentSchema = z.object({
 
 export const InvoiceDetailsSchema = z.object({
 	clientId: z.string().min(1, { message: "Client is required" }),
-	invoiceNumber: z.string().min(1, { message: "invoice no. required" }),
+	number: z.string().min(1, { message: "invoice no. required" }),
 	issueDate: z
 		.string()
 		.min(1, { message: "Issue date is required" })
@@ -153,20 +153,33 @@ export const InvoiceDetailsSchema = z.object({
 		.min(1, { message: "Due date is required" })
 		.transform((val) => new Date(val)),
 	notes: z.string().optional(),
-	status: z.enum(Object.values(InvoiceStatus) as [string, ...string[]]),
+	status: z
+		.string()
+		.optional()
+		.refine(
+			(val) => !val || Object.values(InvoiceStatus).includes(val as any),
+			{
+				message: "Invalid status value",
+			},
+		),
 	items: z.array(ItemSchema),
-	payments: z.array(PaymentSchema),
+	payments: z.array(PaymentSchema).optional(),
 	subtotal: z.string().transform((val) => parseFloat(val) || 0),
 	discount: z
 		.string()
 		.transform((val) => parseFloat(val) || 0)
 		.optional(),
-	tax: z.string().transform((val) => parseFloat(val) || 0),
 	total: z.string().transform((val) => parseFloat(val) || 0),
-	paidTotal: z.string().transform((val) => parseFloat(val) || 0),
-	paymentTerm: z.enum(Object.values(PaymentTerm) as [string, ...string[]]),
-	language: z.string().min(1, "Language is required"),
-	currency: z.string().min(1, "Currency is required"),
+	paidTotal: z
+		.string()
+		.transform((val) => parseFloat(val) || 0)
+		.optional(),
+	paymentTerm: z
+		.string()
+		.optional()
+		.refine((val) => !val || Object.values(PaymentTerm).includes(val as any), {
+			message: "Invalid Payment Terms value",
+		}),
 });
 
 export type InvoiceDetails = z.infer<typeof InvoiceDetailsSchema>;

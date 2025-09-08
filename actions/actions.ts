@@ -7,6 +7,7 @@ import {
 	PaymentSchemaValidation,
 	InvoiceDetails,
 } from "@/lib/zodSchemas";
+import { InvoiceStatus, PaymentTerm } from "@prisma/client";
 type CurrentState = { success: boolean; error: unknown };
 
 export const deleteClient = async (
@@ -134,6 +135,78 @@ export const deletePayment = async (
 		await prisma.payment.delete({
 			where: {
 				id: id,
+			},
+		});
+		return { success: true, error: false };
+	} catch (err) {
+		return { success: false, error: true };
+	}
+};
+
+export const createInvoice = async (
+	currentState: CurrentState,
+	data: FormData,
+) => {
+	try {
+		const session = await auth();
+		const invoice = await prisma.invoice.create({
+			data: {
+				number: data.get("number") as string,
+				issueDate: new Date(data.get("issueDate") as string),
+				dueDate: new Date(data.get("dueDate") as string),
+				status: data.get("status") as InvoiceStatus,
+				notes: data.get("notes") as string,
+				discount: parseFloat(data.get("discount") as string) || 0,
+				subtotal: parseFloat(data.get("subtotal") as string) || 0,
+				tax: parseFloat(data.get("tax") as string) || 0,
+				total: parseFloat(data.get("total") as string) || 0,
+				paymentTerm: data.get("paymentTerm") as PaymentTerm,
+				client: {
+					connect: {
+						id: data.get("clientId") as string,
+					},
+				},
+				user: {
+					connect: {
+						id: session?.user?.id,
+					},
+				},
+			},
+		});
+
+		// Create invoice items separately
+		const items = JSON.parse((data.get("items") as string) || "[]");
+		if (items.length > 0) {
+			await prisma.invoiceItem.createMany({
+				data: items.map((item: any) => ({
+					invoiceId: invoice.id,
+					name: item.name,
+					description: item.description,
+					quantity: parseInt(item.quantity) || 0,
+					unitPrice: parseFloat(item.unitPrice) || 0,
+					total: parseFloat(item.total) || 0,
+				})),
+			});
+		}
+
+		return { success: true, error: false, invoiceId: invoice.id };
+	} catch (err) {
+		return { success: false, error: true };
+	}
+};
+
+export const deleteInvoice = async (
+	currentState: CurrentState,
+	data: FormData,
+) => {
+	try {
+		const id = data.get("id") as string;
+		await prisma.invoice.delete({
+			where: {
+				id: id,
+			},
+			include: {
+				items: true,
 			},
 		});
 		return { success: true, error: false };

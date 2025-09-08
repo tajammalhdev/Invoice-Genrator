@@ -1,36 +1,46 @@
-"use client";
-
-import { useEffect } from "react";
-import { redirect, useParams, useRouter } from "next/navigation";
-import {
-	useInvoiceContext,
-	useInvoiceActions,
-} from "@/hooks/invoice/InvoiceContext";
+import { use } from "react";
 import InvoiceForm from "@/app/(dashboard)/components/_invoices/InvoiceForm";
+import prisma from "@/lib/prisma";
+import { reqSession } from "@/lib/hooks";
 
 interface InvoicePageProps {
-	params: { id: string };
+	params: Promise<{ id: string }>;
 }
-export default function InvoicePage({ params }: InvoicePageProps) {
-	const { id } = useParams();
+export default async function InvoicePage({ params }: InvoicePageProps) {
+	const { id } = await params;
+	const session = await reqSession();
+	const data = await prisma.invoice.findUnique({
+		where: {
+			id: id as string,
+		},
+		include: {
+			client: true,
+			items: true,
+			payments: true,
+		},
+	});
+	const settings = await prisma.setting.findFirst({
+		where: {
+			userId: session.user.id,
+		},
+		select: {
+			currency: true,
+			taxRate: true,
+		},
+	});
 
-	const { loading, getInvoiceById } = useInvoiceContext();
-	const { isEditing, setInvoiceToEdit } = useInvoiceActions();
-
-	const invoiceId = id as string;
-	const invoice = getInvoiceById(invoiceId);
-
-	// Set up editing state when component mounts
-	useEffect(() => {
-		if (invoice && !isEditing) {
-			setInvoiceToEdit(invoice);
-		}
-	}, [invoice, isEditing, setInvoiceToEdit]);
-
-	// Handle loading state
-	if (loading.invoices) {
-		return null; // or a simple loading indicator
-	}
-
-	return <InvoiceForm type="edit" data={invoice} />;
+	const clients = await prisma.client.findMany({
+		where: {
+			userId: session.user.id,
+		},
+	});
+	return (
+		<InvoiceForm
+			type="edit"
+			data={data}
+			currency={settings?.currency}
+			taxRate={settings?.taxRate}
+			clients={clients}
+		/>
+	);
 }

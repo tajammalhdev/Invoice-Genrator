@@ -22,6 +22,7 @@ interface Option {
 	id: string;
 	label: string;
 	description?: string;
+	key?: string;
 }
 
 interface SelectDropdownProps {
@@ -78,7 +79,7 @@ export default function SelectDropdown({
 						<CommandGroup>
 							{options.map((option) => (
 								<CommandItem
-									key={option.id}
+									key={option.key || option.id}
 									value={option.label}
 									onSelect={() => handleSelect(option.id)}>
 									<Check

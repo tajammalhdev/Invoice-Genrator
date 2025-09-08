@@ -1,12 +1,3 @@
-"use client";
-
-import {
-	useInvoices,
-	useLoading,
-	useCompanySettings,
-	useInvoiceActions,
-	useEmailDialog,
-} from "@/hooks/invoice/InvoiceContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Table,
@@ -20,11 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Loader2,
-	MoreHorizontal,
 	Edit,
 	FileText,
 	Trash2,
-	ArrowDown,
 	ChevronDown,
 	Mail,
 	FilterIcon,
@@ -37,31 +26,20 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import SendInvoiceEmailDialog from "./SendInvoiceEmailDialog";
 import { Invoice } from "@prisma/client";
-import { redirect, useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import TableSearch from "../../../components/TableSearch";
 import { useState } from "react";
+import FormContainer from "@/app/components/FormContainer";
 
-export default function InvoicePage({
+export default async function InvoicePage({
 	data,
 	count,
 }: {
 	data: Invoice[];
 	count: number;
 }) {
-	const [invoices] = useState(data);
-	const [companySettings] = useCompanySettings();
-	const { downloadInvoicePDF } = useInvoiceActions();
-
-	const {
-		selectedInvoice,
-		isEmailDialogOpen,
-		openEmailDialog,
-		closeEmailDialog,
-	} = useEmailDialog();
-
 	// Loading skeleton rows
 	const LoadingRows = () => (
 		<>
@@ -109,9 +87,9 @@ export default function InvoicePage({
 							{false ? (
 								<Loader2 className="h-4 w-4 animate-spin" />
 							) : (
-								invoices && (
+								data && (
 									<span className="text-sm font-normal text-muted-foreground">
-										({invoices.length})
+										({data.length})
 									</span>
 								)
 							)}
@@ -125,10 +103,10 @@ export default function InvoicePage({
 								className={` flex items-center justify-center rounded-full bg-lamaYellow`}
 								variant="outline"
 								size="icon"
-								onClick={() => {
-									redirect("/invoices/create");
-								}}>
-								<PlusIcon className="size-4 shrink-0 opacity-50" />
+								asChild>
+								<Link href="/list/invoices/create">
+									<PlusIcon className="size-4 shrink-0 opacity-50" />
+								</Link>
 							</Button>
 						</div>
 					</CardTitle>
@@ -156,19 +134,19 @@ export default function InvoicePage({
 							<TableBody>
 								{false ? (
 									<LoadingRows />
-								) : invoices && invoices.length === 0 ? (
+								) : data && data.length === 0 ? (
 									<TableRow>
 										<TableCell
 											colSpan={9}
 											className="text-center py-8 text-muted-foreground">
-											{!invoices ? "Loading invoices..." : "No invoices found"}
+											{!data ? "Loading invoices..." : "No invoices found"}
 										</TableCell>
 									</TableRow>
 								) : (
-									invoices?.map((invoice) => (
+									data?.map((invoice) => (
 										<TableRow key={invoice.id} className="hover:bg-muted/50">
 											<TableCell className="font-medium">
-												<Link href={`/invoices/${invoice.id}`}>
+												<Link href={`/list/invoices/${invoice.id}`}>
 													{invoice.number}
 												</Link>
 											</TableCell>
@@ -212,47 +190,22 @@ export default function InvoicePage({
 												</span>
 											</TableCell>
 											<TableCell className="text-right">
-												<DropdownMenu>
-													<DropdownMenuTrigger asChild>
-														<Button
-															variant="outline"
-															size="sm"
-															className="bg-primary text-white hover:bg-primary/90 hover:text-white active:bg-primary/90 active:text-white min-w-8 duration-200 ease-linear">
-															Action
-															<ChevronDown className="h-4 w-4 ml-2" />
-														</Button>
-													</DropdownMenuTrigger>
-													<DropdownMenuContent align="end">
-														<DropdownMenuItem
-															onClick={() => {
-																redirect(`/invoices/${invoice.id}`);
-															}}
-															className=" hover:text-primary hover:bg-accent focus:text-primary focus:bg-accent">
-															<Edit className="mr-2 h-4 w-4 text-primary" />
-															Edit
-														</DropdownMenuItem>
-														<DropdownMenuSeparator />
-														<DropdownMenuItem
-															onClick={() => openEmailDialog(invoice)}
-															className=" hover:text-primary hover:bg-accent focus:text-primary focus:bg-accent">
-															<Mail className="mr-2 h-4 w-4 text-primary" />
-															Email Invoice
-														</DropdownMenuItem>
-														<DropdownMenuItem
-															onClick={() => downloadInvoicePDF(invoice)}
-															className=" hover:text-primary hover:bg-accent focus:text-primary focus:bg-accent">
-															<FileText className="mr-2 h-4 w-4 text-primary" />
-															Download PDF
-														</DropdownMenuItem>
-														<DropdownMenuSeparator />
-														<DropdownMenuItem
-															onClick={() => alert("Delete")}
-															className="text-red-600 hover:text-red-700 hover:bg-red-50 focus:text-red-700 focus:bg-red-50">
-															<Trash2 className="mr-2 h-4 w-4 text-red-600" />
-															Delete
-														</DropdownMenuItem>
-													</DropdownMenuContent>
-												</DropdownMenu>
+												<div className="flex items-center gap-2 justify-end">
+													<Button
+														variant="outline"
+														className="w-8 h-8 flex items-center justify-center rounded-full"
+														size="icon"
+														asChild>
+														<Link href={`/list/invoices/${invoice.id}`}>
+															<Edit className=" h-4 w-4 text-muted-foreground" />
+														</Link>
+													</Button>
+													<FormContainer
+														table="invoice"
+														type="delete"
+														id={invoice.id}
+													/>
+												</div>
 											</TableCell>
 										</TableRow>
 									))
@@ -262,16 +215,6 @@ export default function InvoicePage({
 					</div>
 				</CardContent>
 			</Card>
-
-			{/* Email Dialog */}
-			<SendInvoiceEmailDialog
-				isOpen={isEmailDialogOpen}
-				onClose={closeEmailDialog}
-				invoice={selectedInvoice}
-				companySettings={companySettings}
-				clientEmail={(selectedInvoice as any)?.client?.email}
-				clientName={(selectedInvoice as any)?.client?.name}
-			/>
 		</>
 	);
 }

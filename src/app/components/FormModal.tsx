@@ -7,13 +7,14 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useActionState } from "react";
 import { FormContainerProps } from "./FormContainer";
 import { toast } from "sonner";
-import { deleteClient } from "../../../actions/actions";
-import { EditIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { deleteClient, deleteInvoice } from "../../../actions/actions";
+import { EditIcon, Loader2, PlusIcon, Trash2Icon } from "lucide-react";
 import {
 	Sheet,
 	SheetContent,
 	SheetHeader,
 	SheetTitle,
+	SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import PaymentForm from "./forms/PaymentForm";
@@ -24,6 +25,7 @@ const ClientForm = dynamic(() => import("./forms/ClientForm"), {
 
 const deleteActionMap = {
 	client: deleteClient,
+	invoice: deleteInvoice,
 };
 const forms: {
 	[key: string]: (
@@ -57,6 +59,7 @@ const FormModal = ({
 	data,
 	id,
 	relatedData,
+	label,
 }: FormContainerProps & { relatedData?: any }) => {
 	const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
 	const bgColor =
@@ -69,7 +72,7 @@ const FormModal = ({
 	const [open, setOpen] = useState(false);
 
 	const Form = () => {
-		const [state, formAction] = useActionState(
+		const [state, formAction, isSubmitting] = useActionState(
 			deleteActionMap[table as keyof typeof deleteActionMap] ||
 				(() => Promise.resolve({ success: false, error: false })),
 			{
@@ -94,8 +97,18 @@ const FormModal = ({
 				<span className="text-center font-medium">
 					All data will be lost. Are you sure you want to delete this {table}?
 				</span>
-				<button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">
-					Delete
+
+				<button
+					className="bg-red-700 text-white py-2 px-6 flex items-center justify-center rounded-md border-none w-max self-center"
+					disabled={isSubmitting}>
+					{isSubmitting ? (
+						<>
+							<Loader2 className="h-4 w-4 animate-spin" />
+							Delete
+						</>
+					) : (
+						"Delete"
+					)}
 				</button>
 			</form>
 		) : type === "create" || type === "update" ? (
@@ -106,33 +119,49 @@ const FormModal = ({
 	};
 
 	return (
-		<Sheet open={open} onOpenChange={setOpen}>
+		<>
 			<Button
-				className={`${size} flex items-center justify-center rounded-full ${bgColor}`}
+				className={
+					label
+						? `w-full flex items-center justify-center border-none !bg-transparent`
+						: `${size} flex items-center justify-center rounded-full ${bgColor}`
+				}
 				onClick={() => setOpen(true)}
 				variant="outline"
 				size="icon">
 				{type === "create" && (
-					<PlusIcon className="size-4 shrink-0 opacity-50" />
+					<>
+						<PlusIcon className="size-4 shrink-0 opacity-50" />
+						{label}
+					</>
 				)}
 				{type === "update" && (
-					<EditIcon className="size-4 shrink-0 opacity-50" />
+					<>
+						<EditIcon className="size-4 shrink-0 opacity-50" />
+						{label}
+					</>
 				)}
 				{type === "delete" && (
-					<Trash2Icon className="size-4 shrink-0 opacity-50" />
+					<>
+						<Trash2Icon className="size-4 shrink-0 opacity-50" />
+						{label}
+					</>
 				)}
 			</Button>
-			<SheetContent side="right" className="w-[400px] sm:max-w-[400px] p-5">
-				<SheetHeader className="mb-4 px-0">
-					<SheetTitle className="capitalize">
-						{type} {table}
-					</SheetTitle>
-				</SheetHeader>
-				<div className="flex-1 overflow-y-auto">
-					<Form />
-				</div>
-			</SheetContent>
-		</Sheet>
+
+			<Sheet open={open} onOpenChange={setOpen}>
+				<SheetContent side="right" className="w-[400px] sm:max-w-[400px] p-5">
+					<SheetHeader className="mb-4 px-0">
+						<SheetTitle className="capitalize">
+							{type} {table}
+						</SheetTitle>
+					</SheetHeader>
+					<div className="flex-1 overflow-y-auto">
+						<Form />
+					</div>
+				</SheetContent>
+			</Sheet>
+		</>
 	);
 };
 

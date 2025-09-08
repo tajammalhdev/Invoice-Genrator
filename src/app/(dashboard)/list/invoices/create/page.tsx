@@ -5,13 +5,27 @@ import prisma from "@/lib/prisma";
 export default async function CreateInvoice() {
 	const session = await reqSession();
 
-	const data = await prisma.invoice.findMany({
-		select: {
-			client: true,
+	const clients = await prisma.client.findMany({
+		where: {
+			userId: session.user.id,
 		},
 	});
-
-	const currencyCode = session?.user.currency;
-	console.log(session);
-	return <InvoiceForm type="create" data={data} />;
+	const settings = await prisma.setting.findFirst({
+		where: {
+			userId: session.user.id,
+		},
+		select: {
+			currency: true,
+			taxRate: true,
+		},
+	});
+	return (
+		<InvoiceForm
+			type="create"
+			data={[]}
+			clients={clients}
+			currency={settings?.currency}
+			taxRate={settings?.taxRate}
+		/>
+	);
 }

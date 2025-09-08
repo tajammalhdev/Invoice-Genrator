@@ -9,6 +9,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useState } from "react";
 
 type DiscountType = "percentage" | "currency";
 
@@ -19,6 +20,7 @@ interface DiscountFieldProps {
 	onDiscountValueChange: (value: string) => void;
 	error?: string;
 	disabled?: boolean;
+	currency?: string;
 	label?: string;
 	placeholder?: string;
 	className?: string;
@@ -31,6 +33,7 @@ export default function DiscountField({
 	onDiscountValueChange,
 	error,
 	disabled = false,
+	currency = "USD",
 	label = "Discount Type",
 	placeholder = "0",
 	className = "",
@@ -49,7 +52,7 @@ export default function DiscountField({
 	};
 
 	const getSymbol = () => {
-		return discountType === "percentage" ? "%" : "$";
+		return discountType === "percentage" ? "%" : currency;
 	};
 
 	return (
@@ -65,7 +68,8 @@ export default function DiscountField({
 						<Select
 							value={discountType}
 							onValueChange={onDiscountTypeChange}
-							disabled={disabled}>
+							disabled={disabled}
+							name="discountType">
 							<SelectTrigger className="w-full">
 								<SelectValue placeholder="Select discount type" />
 							</SelectTrigger>
@@ -81,13 +85,14 @@ export default function DiscountField({
 							id="discount"
 							placeholder={placeholder}
 							className="text-right"
-							type="number"
+							type="text"
 							value={discountValue}
 							onChange={handleValueChange}
 							disabled={disabled}
 							min={0}
 							max={getMaxValue()}
 							step={getStepValue()}
+							name="discount"
 						/>
 						<span className="text-sm text-muted-foreground font-medium">
 							{getSymbol()}

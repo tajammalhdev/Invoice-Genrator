@@ -1,19 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/utils";
 import SiteHeader from "../../components/_dashboard/SiteHeader";
 import InvoicePage from "../../components/_invoices/InvoicePage";
+import { Suspense } from "react";
 
 export default async function Invoice({
 	searchParams,

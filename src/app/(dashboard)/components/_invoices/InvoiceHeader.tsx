@@ -30,16 +30,12 @@ import { downloadInvoicePDF } from "@/lib/pdfGenerator";
 import SiteHeader from "../_dashboard/SiteHeader";
 interface InvoiceActionsProps {
 	isSubmitting?: boolean;
+	type: "create" | "edit";
 }
-export default function InvoiceHeader({ isSubmitting }: InvoiceActionsProps) {
-	const { isEditing, invoiceToEdit, downloadInvoicePDF } = useInvoiceActions();
-	const {
-		selectedInvoice,
-		isEmailDialogOpen,
-		openEmailDialog,
-		closeEmailDialog,
-	} = useEmailDialog();
-	const [companySettings] = useCompanySettings();
+export default function InvoiceHeader({
+	isSubmitting,
+	type,
+}: InvoiceActionsProps) {
 	return (
 		<>
 			<SiteHeader>
@@ -47,7 +43,7 @@ export default function InvoiceHeader({ isSubmitting }: InvoiceActionsProps) {
 					<Button type="button" variant="outline" disabled={isSubmitting}>
 						Cancel
 					</Button>
-					{isEditing && invoiceToEdit ? (
+					{type === "edit" ? (
 						<div
 							className="inline-flex items-center rounded-md shadow-sm"
 							role="group">
@@ -63,13 +59,13 @@ export default function InvoiceHeader({ isSubmitting }: InvoiceActionsProps) {
 								<DropdownMenuContent align="end">
 									<DropdownMenuSeparator />
 									<DropdownMenuItem
-										onClick={() => openEmailDialog(invoiceToEdit)}
+										onClick={() => {}}
 										className=" hover:text-primary hover:bg-accent focus:text-primary focus:bg-accent">
 										<Mail className="mr-2 h-4 w-4 text-primary" />
 										Email Invoice
 									</DropdownMenuItem>
 									<DropdownMenuItem
-										onClick={() => downloadInvoicePDF(invoiceToEdit)}
+										onClick={() => {}}
 										className=" hover:text-primary hover:bg-accent focus:text-primary focus:bg-accent">
 										<FileText className="mr-2 h-4 w-4 text-primary" />
 										Download PDF
@@ -99,14 +95,6 @@ export default function InvoiceHeader({ isSubmitting }: InvoiceActionsProps) {
 					)}
 				</div>
 			</SiteHeader>
-			<SendInvoiceEmailDialog
-				isOpen={isEmailDialogOpen}
-				onClose={closeEmailDialog}
-				invoice={selectedInvoice}
-				companySettings={companySettings}
-				clientEmail={(selectedInvoice as any)?.client?.email}
-				clientName={(selectedInvoice as any)?.client?.name}
-			/>
 		</>
 	);
 }

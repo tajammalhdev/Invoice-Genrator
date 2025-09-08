@@ -1,12 +1,20 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import {
+	useState,
+	useCallback,
+	useMemo,
+	useEffect,
+	useActionState,
+	startTransition,
+} from "react";
 import { Form, useForm, useFormState } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray } from "react-hook-form";
 import {
 	InvoiceDetails,
 	InvoiceDetailsSchema,
+	InvoiceStatus,
 	PaymentTerm,
 } from "@/lib/zodSchemas";
 import InvoiceHeader from "./InvoiceHeader";
@@ -21,7 +29,7 @@ import {
 import { Label } from "@/components/ui/label";
 import SelectDropdown from "@/app/components/SelectDropdown";
 import DateInput from "@/app/components/DateInput";
-import { convertToDateString } from "@/lib/utils";
+import { convertToDateString, formatDate } from "@/lib/utils";
 import {
 	Select,
 	SelectContent,
@@ -31,13 +39,19 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import DiscountField from "@/app/components/DiscountField";
-import ItemList from "./ItemList";
-import ItemListItem from "./ItemListItem";
+import ItemList from "../../../components/ItemList";
+import ItemListItem from "../../../components/ItemListItem";
 import { Textarea } from "@/components/ui/textarea";
+import { createInvoice } from "../../../../../actions/actions";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface InvoiceFormProps {
 	type: "create" | "edit";
 	data?: any;
+	currency?: any;
+	taxRate?: any;
+	clients?: any;
 }
 
 const statusOptions = [
@@ -47,7 +61,14 @@ const statusOptions = [
 	{ value: "OVERDUE", label: "Overdue" },
 ];
 
-export default function InvoiceForm({ type, data }: InvoiceFormProps) {
+export default function InvoiceForm({
+	type,
+	data,
+	currency,
+	taxRate,
+	clients,
+}: InvoiceFormProps) {
+	const router = useRouter();
 	const {
 		register,
 		handleSubmit,
@@ -58,6 +79,10 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 	} = useForm({
 		resolver: zodResolver(InvoiceDetailsSchema),
 		defaultValues: {
+			status: InvoiceStatus.DRAFT,
+			paymentTerm: PaymentTerm.NET30,
+			discountType: "percentage",
+			discountValue: "0",
 			...data,
 		},
 	});
@@ -75,6 +100,12 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 		control,
 		name: "items",
 	});
+
+	const [state, formAction, isSubmitting] = useActionState(createInvoice, {
+		success: false,
+		error: false,
+	});
+
 	const handleAddNewItemRow = () => {
 		append({
 			name: "",
@@ -91,9 +122,73 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 
 	const today = useMemo(() => convertToDateString(new Date()), []);
 
+	const tax = Number(watch("tax")) || Number(taxRate) || 0;
+	const discount = Number(watch("discountValue")) || 0;
+	const items_raw = watch("items") || [];
+	const itemTotals = items_raw.map((_: any, index: number) =>
+		watch(`items.${index}.total`),
+	);
+	const subtotal = useMemo(() => {
+		return itemTotals.reduce((sum: number, total: any) => {
+			return sum + (Number(total) || 0);
+		}, 0);
+	}, [itemTotals]);
+	let calculatedDiscountAmount = 0;
+	if (watch("discountType") === "percentage") {
+		calculatedDiscountAmount = (subtotal * discount) / 100;
+		if (calculatedDiscountAmount > subtotal) {
+			calculatedDiscountAmount = subtotal;
+		}
+	} else {
+		calculatedDiscountAmount = discount;
+		if (calculatedDiscountAmount > subtotal) {
+			calculatedDiscountAmount = subtotal;
+		}
+	}
+
+	const taxableAmount = Math.max(subtotal - calculatedDiscountAmount, 0);
+	const calculatedTaxAmount = (taxableAmount * tax) / 100;
+	const total = taxableAmount + calculatedTaxAmount;
+	// Update form values only when calculations change
+	useEffect(() => {
+		setCustomValue("total", Number(total).toFixed(2));
+		setCustomValue("subtotal", Number(subtotal).toFixed(2));
+	}, [total, setCustomValue]);
+
+	// Handle redirect after successful creation
+	useEffect(() => {
+		if (state.success && state.invoiceId) {
+			router.push(`/list/invoices/${state.invoiceId}`);
+		}
+	}, [state.success, state.invoiceId, router]);
+
+	const onSubmit = (data: any) => {
+		startTransition(() => {
+			console.log(data);
+			const formData = new FormData();
+			Object.entries(data).forEach(([key, value]) => {
+				if (key === "items") {
+					formData.append(key, JSON.stringify(value));
+				} else {
+					formData.append(key, String(value));
+				}
+			});
+			formAction(formData);
+		});
+	};
+	const handleFormError = (errors: any) => {
+		console.error("❌ Form validation errors:", errors);
+	};
+
+	useEffect(() => {
+		if (state.success) {
+			toast(`Invoice has been created!`);
+		}
+	}, [state]);
+
 	return (
-		<form>
-			<InvoiceHeader />
+		<form onSubmit={handleSubmit(onSubmit, handleFormError)}>
+			<InvoiceHeader isSubmitting={isSubmitting} type={type} />
 			<div className="w-full px-4 py-6">
 				<div className="grid grid-cols-12 gap-4 border-0 rounded-none">
 					<Card className="w-full shadow-none rounded-none col-span-12 xl:col-span-4 h-max py-7 min-h-[200px]">
@@ -101,10 +196,11 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 							<Label htmlFor="clientId">Client</Label>
 							<SelectDropdown
 								options={
-									data?.map((item: any) => ({
-										id: item.client.id,
-										description:
-											item.client.company || `Client ID: ${item.client.id}`,
+									clients?.map((client: any, index: number) => ({
+										id: client.id,
+										label: client.name,
+										description: client.company || client.name,
+										key: `${client.id}-${index}`,
 									})) || []
 								}
 								value={watch("clientId")}
@@ -128,7 +224,9 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 									name="issueDate"
 									register={register}
 									setCustomValue={setCustomValue}
-									defaultValue={today}
+									defaultValue={
+										data?.issueDate ? formatDate(data.issueDate) : today
+									}
 								/>
 							</FormField>
 							<FormField
@@ -138,17 +236,20 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 									name="dueDate"
 									register={register}
 									setCustomValue={setCustomValue}
-									defaultValue={today}
+									defaultValue={
+										data?.dueDate ? formatDate(data.dueDate) : today
+									}
 								/>
 							</FormField>
 							<FormField
 								label="Payment Term"
 								error={errors.paymentTerm?.message as string}>
 								<Select
-									defaultValue={PaymentTerm.NET30}
+									defaultValue={PaymentTerm.NET30 as string}
 									onValueChange={(value) =>
-										setCustomValue("paymentTerm", value)
-									}>
+										setCustomValue("paymentTerm", value as string)
+									}
+									{...register("paymentTerm")}>
 									<SelectTrigger className="w-full py-2 px-3 rounded-md text-sm border border-gray-300">
 										<SelectValue placeholder="Select a payment term" />
 									</SelectTrigger>
@@ -174,8 +275,11 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 								label="Status"
 								error={errors.status?.message as string}>
 								<Select
-									defaultValue="DRAFT"
-									onValueChange={(value) => setCustomValue("status", value)}>
+									defaultValue={InvoiceStatus.DRAFT as string}
+									onValueChange={(value) =>
+										setCustomValue("status", value as string)
+									}
+									{...register("status")}>
 									<SelectTrigger className="w-full py-2 px-3 rounded-md text-sm border border-gray-300">
 										<SelectValue placeholder="Select a Status" />
 									</SelectTrigger>
@@ -189,8 +293,8 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 								</Select>
 							</FormField>
 							<DiscountField
-								discountType={watch("discountType")}
-								discountValue={watch("discountValue")}
+								discountType={watch("discountType") || "percentage"}
+								discountValue={watch("discountValue") || "0"}
 								onDiscountTypeChange={(value) =>
 									setCustomValue("discountType", value)
 								}
@@ -198,6 +302,7 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 									setCustomValue("discountValue", value)
 								}
 								error={errors.discount?.message as string}
+								currency={currency}
 							/>
 						</CardContent>
 					</Card>
@@ -228,7 +333,7 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 							</CardHeader>
 							<CardContent>
 								<FormField
-									label="Invoice Number"
+									label="Public Note"
 									error={errors.note?.message as string}>
 									<Textarea
 										placeholder="Enter public note here..."
@@ -249,23 +354,31 @@ export default function InvoiceForm({ type, data }: InvoiceFormProps) {
 								<div className="space-y-3">
 									<div className="flex justify-between">
 										<span className="text-sm font-medium">Subtotal:</span>
-										<span className="text-sm text-right"></span>
+										<span className="text-sm text-right">
+											{currency} {Number(subtotal).toFixed(2)}
+										</span>
 									</div>
 
 									<div className="flex justify-between">
 										<span className="text-sm font-medium">Discount:</span>
-										<span className="text-sm text-right"></span>
+										<span className="text-sm text-right">
+											{currency} {Number(discount).toFixed(2)}
+										</span>
 									</div>
 									<div className="flex justify-between">
-										<span className="text-sm font-medium">Tax %:</span>
-										<span className="text-sm text-right"></span>
+										<span className="text-sm font-medium">Tax {tax}%:</span>
+										<span className="text-sm text-right">
+											{currency} {((subtotal * tax) / 100).toFixed(2)}
+										</span>
 									</div>
 								</div>
 							</CardContent>
 							<CardFooter className="border-t border-border pb-3">
-								<div className="flex justify-between text-lg font-bold">
+								<div className="flex justify-between text-lg font-bold w-full">
 									<span>Total:</span>
-									<span></span>
+									<span>
+										{currency} {total.toFixed(2)}
+									</span>
 								</div>
 							</CardFooter>
 						</Card>

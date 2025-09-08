@@ -14,8 +14,9 @@ export default function DateInput({
 	return (
 		<input
 			type="date"
-			{...register(name)}
-			defaultValue={defaultValue}
+			{...register(name, {
+				value: defaultValue,
+			})}
 			className="w-full py-2 px-3 rounded-md text-sm disabled:opacity-75 disabled:cursor-not-allowed border border-gray-300"
 			onChange={(e) => setCustomValue(name, e.target.value)}
 		/>

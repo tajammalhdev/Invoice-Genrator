@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import FormInput from "../_shared/FormInput";
+import FormInput from "../(dashboard)/components/_shared/FormInput";
 import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";

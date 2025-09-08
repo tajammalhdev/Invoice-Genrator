@@ -10,14 +10,14 @@ export const copyToClipboard = (text: string) => {
 	navigator.clipboard.writeText(text);
 	toast.success("Copied to clipboard!");
 };
-export const formatDate = (dateString: string | Date) => {
-	const date = new Date(dateString);
-	return date.toLocaleDateString("en-US", {
-		year: "numeric",
-		month: "long",
-		day: "numeric",
-	});
-};
+export function formatDate(dateValue: string | Date): string {
+	const date = new Date(dateValue);
+	// Adjust for timezone to get local date
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, "0");
+	const day = String(date.getDate()).padStart(2, "0");
+	return `${year}-${month}-${day}`;
+}
 
 export async function imabebase64(image: File): Promise<string> {
 	const reader = new FileReader();
