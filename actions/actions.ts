@@ -194,7 +194,71 @@ export const createInvoice = async (
 		return { success: false, error: true };
 	}
 };
+export const updateInvoice = async (
+	currentState: CurrentState,
+	data: FormData,
+) => {
+	try {
+		const session = await auth();
+		const invoiceId = data.get("id") as string;
+		console.log("Update invoice - ID:", invoiceId);
+		console.log(
+			"Update invoice - FormData entries:",
+			Array.from(data.entries()),
+		);
 
+		if (!invoiceId) {
+			return { success: false, error: "Invoice ID is required" };
+		}
+
+		const invoice = await prisma.invoice.update({
+			where: {
+				id: invoiceId,
+			},
+			data: {
+				number: data.get("number") as string,
+				issueDate: new Date(data.get("issueDate") as string),
+				dueDate: new Date(data.get("dueDate") as string),
+				status: data.get("status") as InvoiceStatus,
+				notes: data.get("notes") as string,
+				discount: parseFloat(data.get("discount") as string) || 0,
+				subtotal: parseFloat(data.get("subtotal") as string) || 0,
+				total: parseFloat(data.get("total") as string) || 0,
+				paymentTerm: data.get("paymentTerm") as PaymentTerm,
+				client: {
+					connect: {
+						id: data.get("clientId") as string,
+					},
+				},
+			},
+		});
+
+		// Update invoice items - delete existing and create new ones
+		await prisma.invoiceItem.deleteMany({
+			where: {
+				invoiceId: invoice.id,
+			},
+		});
+
+		const items = JSON.parse((data.get("items") as string) || "[]");
+		if (items.length > 0) {
+			await prisma.invoiceItem.createMany({
+				data: items.map((item: any) => ({
+					invoiceId: invoice.id,
+					name: item.name,
+					description: item.description,
+					quantity: parseInt(item.quantity) || 0,
+					unitPrice: parseFloat(item.unitPrice) || 0,
+					total: parseFloat(item.total) || 0,
+				})),
+			});
+		}
+		return { success: true, error: false, invoiceId: invoice.id };
+	} catch (err) {
+		console.error("Update invoice error:", err);
+		return { success: false, error: err };
+	}
+};
 export const deleteInvoice = async (
 	currentState: CurrentState,
 	data: FormData,

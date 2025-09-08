@@ -23,11 +23,10 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import SendInvoiceEmailDialog from "./SendInvoiceEmailDialog";
 import { useCompanySettings } from "@/hooks/invoice/InvoiceContext";
 import { useEmailDialog } from "@/hooks/invoice/InvoiceContext";
 import { downloadInvoicePDF } from "@/lib/pdfGenerator";
-import SiteHeader from "../_dashboard/SiteHeader";
+import SiteHeader from "../(dashboard)/components/_dashboard/SiteHeader";
 interface InvoiceActionsProps {
 	isSubmitting?: boolean;
 	type: "create" | "edit";
@@ -41,13 +40,23 @@ export default function InvoiceHeader({
 			<SiteHeader>
 				<div className="flex justify-end gap-4">
 					<Button type="button" variant="outline" disabled={isSubmitting}>
-						Cancel
+						<Link href="/list/invoices">Cancel</Link>
 					</Button>
 					{type === "edit" ? (
 						<div
 							className="inline-flex items-center rounded-md shadow-sm"
 							role="group">
-							<Button className="rounded-r-none h-10">Update</Button>
+							<Button
+								type="submit"
+								className="flex items-center gap-2 rounded-r-none h-10"
+								disabled={isSubmitting}>
+								{isSubmitting ? (
+									<Loader2 className="h-4 w-4 animate-spin" />
+								) : (
+									<Save className="h-4 w-4" />
+								)}
+								{isSubmitting ? "Updating..." : "Update"}
+							</Button>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button

@@ -8,7 +8,13 @@ import { useActionState } from "react";
 import { FormContainerProps } from "./FormContainer";
 import { toast } from "sonner";
 import { deleteClient, deleteInvoice } from "../../../actions/actions";
-import { EditIcon, Loader2, PlusIcon, Trash2Icon } from "lucide-react";
+import {
+	EditIcon,
+	Loader2,
+	MailIcon,
+	PlusIcon,
+	Trash2Icon,
+} from "lucide-react";
 import {
 	Sheet,
 	SheetContent,
@@ -18,6 +24,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import PaymentForm from "./forms/PaymentForm";
+import EmailForm from "./forms/EmailForm";
 
 const ClientForm = dynamic(() => import("./forms/ClientForm"), {
 	loading: () => <h1>Loading...</h1>,
@@ -27,28 +34,37 @@ const deleteActionMap = {
 	client: deleteClient,
 	invoice: deleteInvoice,
 };
+export interface FormProps {
+	setOpen: Dispatch<SetStateAction<boolean>>;
+	type: "create" | "update" | "email";
+	data?: any;
+	relatedData?: any;
+}
 const forms: {
-	[key: string]: (
-		setOpen: Dispatch<SetStateAction<boolean>>,
-		type: "create" | "update",
-		data?: any,
-		relatedData?: any,
-	) => React.ReactElement;
+	[key: string]: (props: FormProps) => React.ReactElement;
 } = {
-	client: (setOpen, type, data, relatedData) => (
+	client: (props) => (
 		<ClientForm
-			setOpen={setOpen}
-			type={type}
-			data={data}
-			relatedData={relatedData}
+			setOpen={props.setOpen}
+			type={props.type}
+			data={props.data}
+			relatedData={props.relatedData}
 		/>
 	),
-	payment: (setOpen, type, data, relatedData) => (
+	payment: (props) => (
 		<PaymentForm
-			setOpen={setOpen}
-			type={type}
-			data={data}
-			relatedData={relatedData}
+			setOpen={props.setOpen}
+			type={props.type}
+			data={props.data}
+			relatedData={props.relatedData}
+		/>
+	),
+	Email: (props) => (
+		<EmailForm
+			setOpen={props.setOpen}
+			type={props.type}
+			data={props.data}
+			relatedData={props.relatedData}
 		/>
 	),
 };
@@ -111,8 +127,8 @@ const FormModal = ({
 					)}
 				</button>
 			</form>
-		) : type === "create" || type === "update" ? (
-			forms[table](setOpen, type, data, relatedData)
+		) : type === "create" || type === "update" || type === "email" ? (
+			forms[table]({ setOpen, type, data, relatedData })
 		) : (
 			"Form not found!"
 		);
@@ -144,6 +160,12 @@ const FormModal = ({
 				{type === "delete" && (
 					<>
 						<Trash2Icon className="size-4 shrink-0 opacity-50" />
+						{label}
+					</>
+				)}
+				{type === "email" && (
+					<>
+						<MailIcon className="size-4 shrink-0 opacity-50" />
 						{label}
 					</>
 				)}

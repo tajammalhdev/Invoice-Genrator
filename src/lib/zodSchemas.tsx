@@ -142,6 +142,7 @@ export const PaymentSchema = z.object({
 });
 
 export const InvoiceDetailsSchema = z.object({
+	id: z.string().optional(),
 	clientId: z.string().min(1, { message: "Client is required" }),
 	number: z.string().min(1, { message: "invoice no. required" }),
 	issueDate: z
@@ -163,17 +164,12 @@ export const InvoiceDetailsSchema = z.object({
 			},
 		),
 	items: z.array(ItemSchema),
-	payments: z.array(PaymentSchema).optional(),
 	subtotal: z.string().transform((val) => parseFloat(val) || 0),
 	discount: z
 		.string()
 		.transform((val) => parseFloat(val) || 0)
 		.optional(),
 	total: z.string().transform((val) => parseFloat(val) || 0),
-	paidTotal: z
-		.string()
-		.transform((val) => parseFloat(val) || 0)
-		.optional(),
 	paymentTerm: z
 		.string()
 		.optional()

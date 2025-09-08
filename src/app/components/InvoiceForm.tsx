@@ -8,7 +8,7 @@ import {
 	useActionState,
 	startTransition,
 } from "react";
-import { Form, useForm, useFormState } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray } from "react-hook-form";
 import {
@@ -17,7 +17,6 @@ import {
 	InvoiceStatus,
 	PaymentTerm,
 } from "@/lib/zodSchemas";
-import InvoiceHeader from "./InvoiceHeader";
 import FormField from "@/app/components/FormField";
 import {
 	Card,
@@ -39,12 +38,13 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import DiscountField from "@/app/components/DiscountField";
-import ItemList from "../../../components/ItemList";
-import ItemListItem from "../../../components/ItemListItem";
+import ItemList from "./ItemList";
+import ItemListItem from "./ItemListItem";
 import { Textarea } from "@/components/ui/textarea";
-import { createInvoice } from "../../../../../actions/actions";
+import { createInvoice, updateInvoice } from "../../../actions/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import InvoiceHeader from "./InvoiceHeader";
 
 interface InvoiceFormProps {
 	type: "create" | "edit";
@@ -69,6 +69,9 @@ export default function InvoiceForm({
 	clients,
 }: InvoiceFormProps) {
 	const router = useRouter();
+
+	const today = useMemo(() => convertToDateString(new Date()), []);
+
 	const {
 		register,
 		handleSubmit,
@@ -84,6 +87,8 @@ export default function InvoiceForm({
 			discountType: "percentage",
 			discountValue: "0",
 			...data,
+			issueDate: data?.issueDate ? formatDate(data.issueDate) : today,
+			dueDate: data?.dueDate ? formatDate(data.dueDate) : today,
 		},
 	});
 	const setCustomValue = useCallback(
@@ -101,10 +106,13 @@ export default function InvoiceForm({
 		name: "items",
 	});
 
-	const [state, formAction, isSubmitting] = useActionState(createInvoice, {
-		success: false,
-		error: false,
-	});
+	const [state, formAction, isSubmitting] = useActionState(
+		type === "create" ? createInvoice : updateInvoice,
+		{
+			success: false,
+			error: false,
+		},
+	);
 
 	const handleAddNewItemRow = () => {
 		append({
@@ -119,8 +127,6 @@ export default function InvoiceForm({
 	const handleRemoveItem = (index: number) => {
 		remove(index);
 	};
-
-	const today = useMemo(() => convertToDateString(new Date()), []);
 
 	const tax = Number(watch("tax")) || Number(taxRate) || 0;
 	const discount = Number(watch("discountValue")) || 0;
@@ -151,6 +157,7 @@ export default function InvoiceForm({
 	const total = taxableAmount + calculatedTaxAmount;
 	// Update form values only when calculations change
 	useEffect(() => {
+		setCustomValue("discount", Number(calculatedDiscountAmount).toFixed(2));
 		setCustomValue("total", Number(total).toFixed(2));
 		setCustomValue("subtotal", Number(subtotal).toFixed(2));
 	}, [total, setCustomValue]);
@@ -164,7 +171,6 @@ export default function InvoiceForm({
 
 	const onSubmit = (data: any) => {
 		startTransition(() => {
-			console.log(data);
 			const formData = new FormData();
 			Object.entries(data).forEach(([key, value]) => {
 				if (key === "items") {
@@ -182,13 +188,17 @@ export default function InvoiceForm({
 
 	useEffect(() => {
 		if (state.success) {
-			toast(`Invoice has been created!`);
+			toast(`Invoice has been ${type}ed!`);
 		}
 	}, [state]);
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit, handleFormError)}>
+			{type === "edit" && data?.id && (
+				<input type="hidden" name="id" value={data.id} />
+			)}
 			<InvoiceHeader isSubmitting={isSubmitting} type={type} />
+
 			<div className="w-full px-4 py-6">
 				<div className="grid grid-cols-12 gap-4 border-0 rounded-none">
 					<Card className="w-full shadow-none rounded-none col-span-12 xl:col-span-4 h-max py-7 min-h-[200px]">

@@ -4,8 +4,8 @@ import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/utils";
 import SiteHeader from "../../components/_dashboard/SiteHeader";
-import InvoicePage from "../../components/_invoices/InvoicePage";
 import { Suspense } from "react";
+import InvoiceList from "@/app/components/InvoiceList";
 
 export default async function Invoice({
 	searchParams,
@@ -76,7 +76,7 @@ export default async function Invoice({
 				</Button>
 			</SiteHeader>
 			<div className="w-full h-full min-h-[calc(100vh-10rem)] px-4 py-6 ">
-				<InvoicePage data={data} count={count} />
+				<InvoiceList data={data} count={count} />
 			</div>
 		</>
 	);

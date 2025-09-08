@@ -1,4 +1,4 @@
-import InvoiceForm from "@/app/(dashboard)/components/_invoices/InvoiceForm";
+import InvoiceForm from "@/app/components/InvoiceForm";
 import { reqSession } from "@/lib/hooks";
 import prisma from "@/lib/prisma";
 

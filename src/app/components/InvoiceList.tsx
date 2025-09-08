@@ -29,11 +29,11 @@ import {
 import { Invoice } from "@prisma/client";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import TableSearch from "../../../components/TableSearch";
+import TableSearch from "./TableSearch";
 import { useState } from "react";
 import FormContainer from "@/app/components/FormContainer";
 
-export default async function InvoicePage({
+export default async function InvoiceList({
 	data,
 	count,
 }: {
@@ -200,6 +200,11 @@ export default async function InvoicePage({
 															<Edit className=" h-4 w-4 text-muted-foreground" />
 														</Link>
 													</Button>
+													<FormContainer
+														table="Email"
+														type="email"
+														id={invoice.id}
+													/>
 													<FormContainer
 														table="invoice"
 														type="delete"

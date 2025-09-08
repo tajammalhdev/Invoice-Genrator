@@ -23,19 +23,14 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Controller } from "react-hook-form";
-interface PaymentFormProps {
-	type: "create" | "update";
-	data?: PaymentSchemaValidation;
-	setOpen: Dispatch<SetStateAction<boolean>>;
-	relatedData: any;
-}
+import { FormProps } from "../FormModal";
 
 export default function PaymentForm({
 	type,
 	data,
 	setOpen,
 	relatedData,
-}: PaymentFormProps) {
+}: FormProps) {
 	const {
 		register,
 		handleSubmit,

@@ -1,5 +1,5 @@
 import { use } from "react";
-import InvoiceForm from "@/app/(dashboard)/components/_invoices/InvoiceForm";
+import InvoiceForm from "@/app/components/InvoiceForm";
 import prisma from "@/lib/prisma";
 import { reqSession } from "@/lib/hooks";
 

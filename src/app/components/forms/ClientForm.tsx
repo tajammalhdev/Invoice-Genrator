@@ -15,15 +15,10 @@ import { useForm } from "react-hook-form";
 import { createClient, updateClient } from "../../../../actions/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { FormContainerProps } from "../FormContainer";
+import { FormProps } from "../FormModal";
 
-interface ClientFormProps {
-	type: "create" | "update";
-	data?: Clients;
-	setOpen: Dispatch<SetStateAction<boolean>>;
-	relatedData: any;
-}
-
-const ClientForm = ({ type, data, setOpen, relatedData }: ClientFormProps) => {
+const ClientForm = ({ type, data, setOpen, relatedData }: FormProps) => {
 	const {
 		register,
 		handleSubmit,

@@ -2,8 +2,8 @@ import prisma from "@/lib/prisma";
 import FormModal from "./FormModal";
 import { auth } from "@/lib/auth";
 export type FormContainerProps = {
-	table: "client" | "payment" | "invoice";
-	type: "create" | "update" | "delete";
+	table: "client" | "payment" | "invoice" | "Email";
+	type: "create" | "update" | "delete" | "email";
 	data?: any;
 	id?: number | string;
 	label?: string;
@@ -59,6 +59,22 @@ const FormContainer = async ({
 					invoices: invoices,
 				};
 			}
+			break;
+		case "Email":
+			const invoice = await prisma.invoice.findUnique({
+				where: {
+					id: id as string,
+				},
+				include: {
+					payments: true,
+					items: true,
+					client: true,
+					user: true,
+				},
+			});
+			relatedData = {
+				...invoice,
+			};
 			break;
 		default:
 			break;
