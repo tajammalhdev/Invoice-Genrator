@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/utils";
+import { ITEM_PER_PAGE } from "@/lib/constants";
 import SiteHeader from "../../components/_dashboard/SiteHeader";
 import { Suspense } from "react";
 import InvoiceList from "@/app/components/InvoiceList";

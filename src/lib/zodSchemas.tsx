@@ -17,84 +17,32 @@ const PaymentTerm = {
 
 // Main comprehensive schema for all settings
 export const SettingsSchema = z.object({
+	id: z.string().optional(),
 	companyName: z
 		.string()
 		.min(1, "Company name is required")
 		.max(100, "Company name must be less than 100 characters"),
-	companyEmail: z
-		.string()
-		.min(1, "Company email is required")
-		.email("Please enter a valid email address")
-		.max(100, "Email must be less than 100 characters"),
+	companyEmail: z.string().max(100, "Email must be less than 100 characters"),
 	companyPhone: z
 		.string()
-		.min(1, "Company phone is required")
-		.regex(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"),
-	logoUrl: z
-		.string()
-		.url("Please enter a valid URL")
-		.optional()
-		.or(z.literal("")),
-	addressLine1: z
-		.string()
-		.min(1, "Address line 1 is required")
-		.max(100, "Address must be less than 100 characters")
-		.optional()
-		.or(z.literal("")),
-	addressLine2: z
-		.string()
-		.max(100, "Address must be less than 100 characters")
-		.optional()
-		.or(z.literal("")),
-	city: z
-		.string()
-		.min(1, "City is required")
-		.max(50, "City must be less than 50 characters")
-		.optional()
-		.or(z.literal("")),
+		.regex(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number")
+		.optional(),
+	logoUrl: z.string().optional(),
+	addressLine1: z.string().optional(),
+	addressLine2: z.string().optional(),
+	city: z.string().optional(),
 	state: z
 		.string()
-		.min(1, "State is required")
-		.max(50, "State must be less than 50 characters")
-		.optional()
-		.or(z.literal("")),
-	postalCode: z
-		.string()
-		.min(1, "Postal code is required")
-		.max(20, "Postal code must be less than 20 characters")
-		.optional()
-		.or(z.literal("")),
-	country: z
-		.string()
-		.min(1, "Country is required")
-		.max(50, "Country must be less than 50 characters")
-		.optional()
-		.or(z.literal("")),
-	currencyCode: z
-		.string()
-		.min(1, "Currency code is required")
-		.max(3, "Currency code must be 3 characters")
-		.optional(),
-	dateFormat: z
-		.string()
-		.min(1, "Date format is required")
-		.max(20, "Date format must be less than 20 characters")
-		.optional(),
-	taxRate: z
-		.number()
-		.min(0, "Tax rate must be 0 or greater")
-		.max(100, "Tax rate cannot exceed 100%")
-		.optional(),
 
-	invoicePrefix: z
-		.string()
-		.min(1, "Invoice prefix is required")
-		.max(10, "Invoice prefix must be less than 10 characters")
 		.optional(),
-	nextInvoiceNumber: z
-		.number()
-		.min(1, "Invoice number must be 1 or greater")
-		.optional(),
+	postalCode: z.string().optional(),
+	country: z.string().optional(),
+	currencyCode: z.string().optional(),
+	dateFormat: z.string().optional(),
+	taxRate: z.number().optional(),
+
+	invoicePrefix: z.string().optional(),
+	nextInvoiceNumber: z.number().optional(),
 });
 
 // Partial schemas for form sections

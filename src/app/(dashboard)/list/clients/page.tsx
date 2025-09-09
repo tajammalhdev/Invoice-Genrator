@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { ITEM_PER_PAGE } from "@/lib/utils";
+import { ITEM_PER_PAGE } from "@/lib/constants";
 import SiteHeader from "../../components/_dashboard/SiteHeader";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

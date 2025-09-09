@@ -35,8 +35,8 @@ model Setting {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  companyName  String
-  companyEmail String
+  companyName  String?
+  companyEmail String?
   companyPhone String?
   addressLine1 String?
   addressLine2 String?
@@ -45,11 +45,11 @@ model Setting {
   postalCode   String?
   country      String?
 
-  currency          String  @default("USD")
-  dateFormat        String  @default("yyyy-MM-dd")
-  taxRate           Float   @default(0)
-  invoicePrefix     String  @default("INV-")
-  nextInvoiceNumber Int     @default(1)
+  currency          String? @default("USD")
+  dateFormat        String? @default("yyyy-MM-dd")
+  taxRate           Float?  @default(0)
+  invoicePrefix     String? @default("INV-")
+  nextInvoiceNumber Int?    @default(1)
   logoUrl           String?
 
   createdAt DateTime @default(now())

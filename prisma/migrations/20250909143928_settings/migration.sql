@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE "public"."Setting" ALTER COLUMN "companyName" DROP NOT NULL,
+ALTER COLUMN "companyEmail" DROP NOT NULL,
+ALTER COLUMN "currency" DROP NOT NULL,
+ALTER COLUMN "dateFormat" DROP NOT NULL,
+ALTER COLUMN "taxRate" DROP NOT NULL,
+ALTER COLUMN "invoicePrefix" DROP NOT NULL,
+ALTER COLUMN "nextInvoiceNumber" DROP NOT NULL;

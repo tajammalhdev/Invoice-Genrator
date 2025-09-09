@@ -3,7 +3,6 @@ import { Invoice, Setting } from "@prisma/client";
 
 export interface EmailInvoiceData {
 	invoice: Invoice;
-	companySettings: Setting;
 	clientEmail: string;
 	clientName: string;
 	subject?: string;
@@ -14,7 +13,6 @@ export const sendInvoiceEmail = async (data: EmailInvoiceData) => {
 	try {
 		const {
 			invoice,
-			companySettings,
 			clientEmail,
 			clientName,
 			subject: customSubject,
@@ -33,10 +31,7 @@ export const sendInvoiceEmail = async (data: EmailInvoiceData) => {
 		});
 
 		const subject =
-			customSubject ||
-			`Invoice #${invoice.number} from ${
-				companySettings?.companyName || "Your Company"
-			}`;
+			customSubject || `Invoice #${invoice.number} from Your Company`;
 
 		const htmlContent = `
 			<!DOCTYPE html>
@@ -61,20 +56,8 @@ export const sendInvoiceEmail = async (data: EmailInvoiceData) => {
 				<body>
 					<div class="container">
 						<div class="header">
-							${
-								companySettings?.logoUrl
-									? `<div class="logo-container" style="text-align: center; margin-bottom: 20px;">
-										<img
-										src="${companySettings.logoUrl}"
-										style="max-height:60px; max-width:200px; object-fit:contain; display:block; margin:0 auto;"
-										alt="Company Logo"
-										/>
-									</div>`
-									: ""
-							}
-							<div class="company-name">${
-								companySettings?.companyName || "Your Company"
-							}</div>
+							
+							<div class="company-name"></div>
 							<p>Thank you for your business!</p>
 						</div>
 						
@@ -146,7 +129,6 @@ export const sendInvoiceEmail = async (data: EmailInvoiceData) => {
 						
 						<div class="footer">
 							<p>If you have any questions, please don't hesitate to contact us.</p>
-							<p>${companySettings?.companyName || "Your Company"}</p>
 						</div>
 					</div>
 				</body>
@@ -154,10 +136,7 @@ export const sendInvoiceEmail = async (data: EmailInvoiceData) => {
 		`;
 
 		const mailOptions = {
-			from:
-				companySettings?.companyEmail ||
-				process.env.SMTP_FROM ||
-				"noreply@yourcompany.com",
+			from: process.env.SMTP_FROM || "noreply@yourcompany.com",
 			to: clientEmail,
 			subject: subject,
 			html: htmlContent,

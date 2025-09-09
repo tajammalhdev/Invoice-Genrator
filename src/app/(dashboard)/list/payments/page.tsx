@@ -4,7 +4,7 @@ import FormContainer from "@/app/components/FormContainer";
 import Table from "@/app/components/Table";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/utils";
+import { ITEM_PER_PAGE } from "@/lib/constants";
 import SiteHeader from "../../components/_dashboard/SiteHeader";
 import TableSearch from "@/app/components/TableSearch";
 

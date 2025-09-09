@@ -1,4 +1,5 @@
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export default function FormField({
 	label,
@@ -13,7 +14,10 @@ export default function FormField({
 }) {
 	return (
 		<div
-			className={`sm:grid sm:gap-10 flex flex-col lg:flex-row px-2  py-4 sm:py-3 lg:items-center sm:grid-cols-3 ${className}`}>
+			className={cn(
+				"sm:grid sm:gap-10 flex flex-col lg:flex-row px-2 py-4 sm:py-3 lg:items-center sm:grid-cols-3",
+				className,
+			)}>
 			<dt className="text-sm flex flex-col">
 				<Label htmlFor={label.toLowerCase().replace(/\s+/g, "")}>{label}</Label>
 			</dt>

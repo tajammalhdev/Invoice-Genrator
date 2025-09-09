@@ -1,4 +1,11 @@
-import { Dispatch, SetStateAction } from "react";
+import {
+	Dispatch,
+	SetStateAction,
+	startTransition,
+	useActionState,
+	useEffect,
+	useState,
+} from "react";
 import { FormProps } from "../FormModal";
 import { AlertCircle, Loader2, Mail } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -12,6 +19,9 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { emailTemplates } from "@/lib/constants";
+import { sendInvoiceEmail } from "../../../../actions/actions";
+import { toast } from "sonner";
 
 export default function EmailForm({
 	type,
@@ -19,11 +29,67 @@ export default function EmailForm({
 	setOpen,
 	relatedData,
 }: FormProps) {
+	const [selectedTemplate, setSelectedTemplate] = useState("initial");
+	const [subject, setSubject] = useState("");
+	const [message, setMessage] = useState("");
+
+	const handleTemplateChange = (templateKey: string) => {
+		setSelectedTemplate(templateKey);
+		const template = emailTemplates[templateKey as keyof typeof emailTemplates];
+		if (!relatedData) return;
+		if (template) {
+			const dueDate = new Date(relatedData.dueDate).toLocaleDateString();
+			const newSubject = template.subject
+				.replace("{invoiceNumber}", relatedData?.number || "")
+				.replace("{companyName}", relatedData?.companyName || "Your Company");
+
+			const newMessage = template.message
+				.replace("{invoiceNumber}", relatedData?.number || "")
+				.replace("{dueDate}", dueDate);
+
+			setSubject(newSubject);
+			setMessage(newMessage);
+		}
+	};
+	// Initialize with default template when dialog opens
+	useEffect(() => {
+		if (relatedData) {
+			handleTemplateChange("initial");
+		}
+	}, [relatedData]);
+
+	const [state, formAction, isSubmitting] = useActionState(sendInvoiceEmail, {
+		success: false,
+		error: false,
+	});
+
+	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+		startTransition(() => {
+			event.preventDefault();
+			const formData = new FormData(event.currentTarget);
+			formAction(formData);
+		});
+	};
+
+	useEffect(() => {
+		if (state.success) {
+			toast(`Invoice email has been sent!`);
+			setOpen(false);
+		}
+	}, [state, setOpen]);
+
 	return (
-		<div className="space-y-4">
+		<form className="space-y-4" onSubmit={handleSubmit}>
+			<input type="hidden" name="invoiceId" value={relatedData?.id} />
+			<input type="hidden" name="invoice" value={JSON.stringify(relatedData)} />
+			<input
+				type="hidden"
+				name="clientEmail"
+				value={relatedData?.client.email}
+			/>
 			<div className="space-y-2">
 				<Label htmlFor="template">Email Template</Label>
-				<Select>
+				<Select value={selectedTemplate} onValueChange={handleTemplateChange}>
 					<SelectTrigger>
 						<SelectValue placeholder="Select template" />
 					</SelectTrigger>
@@ -34,16 +100,32 @@ export default function EmailForm({
 						<SelectItem value="third-reminder">Third Reminder</SelectItem>
 					</SelectContent>
 				</Select>
+				<input type="hidden" name="template" value={selectedTemplate} />
 			</div>
-
+			<div className="space-y-2">
+				<Label htmlFor="email" className="text-xs italic text-muted-foreground">
+					{relatedData?.client.name} ({relatedData?.client.email})
+				</Label>
+			</div>
 			<div className="space-y-2">
 				<Label htmlFor="subject">Subject</Label>
-				<Input id="subject" />
+				<Input
+					id="subject"
+					name="subject"
+					value={subject}
+					onChange={(e) => setSubject(e.target.value)}
+				/>
 			</div>
 
 			<div className="space-y-2">
 				<Label htmlFor="message">Message</Label>
-				<Textarea id="message" rows={4} />
+				<Textarea
+					id="message"
+					name="message"
+					rows={4}
+					value={message}
+					onChange={(e) => setMessage(e.target.value)}
+				/>
 			</div>
 
 			<div className="bg-blue-50 p-4 rounded-lg">
@@ -62,9 +144,18 @@ export default function EmailForm({
 				</div>
 			</div>
 			<Button className="bg-accent text-foreground">
-				<Mail className="mr-2 h-4 w-4" />
-				Send Email
+				{isSubmitting ? (
+					<>
+						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+						Sending...
+					</>
+				) : (
+					<>
+						<Mail className="mr-2 h-4 w-4" />
+						Send Email
+					</>
+				)}
 			</Button>
-		</div>
+		</form>
 	);
 }

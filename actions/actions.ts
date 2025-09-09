@@ -8,6 +8,9 @@ import {
 	InvoiceDetails,
 } from "@/lib/zodSchemas";
 import { InvoiceStatus, PaymentTerm } from "@prisma/client";
+import { sendInvoiceEmail as sendInvoiceEmailService } from "@/lib/emailService";
+import { NextResponse } from "next/server";
+
 type CurrentState = { success: boolean; error: unknown };
 
 export const deleteClient = async (
@@ -276,5 +279,79 @@ export const deleteInvoice = async (
 		return { success: true, error: false };
 	} catch (err) {
 		return { success: false, error: true };
+	}
+};
+
+export const sendInvoiceEmail = async (
+	currentState: CurrentState,
+	data: FormData,
+) => {
+	try {
+		const invoice = JSON.parse(data.get("invoice") as string);
+		const clientEmail = data.get("clientEmail") as string;
+		const clientName = data.get("clientName") as string;
+		const subject = data.get("subject") as string;
+		const message = data.get("message") as string;
+		const template = data.get("template") as string;
+		const invoiceId = data.get("invoiceId") as string;
+
+		const result = await sendInvoiceEmailService({
+			invoice,
+			clientEmail,
+			clientName,
+			subject,
+			message,
+		});
+
+		if (result.success) {
+			return { success: true, error: false };
+		} else {
+			return { success: false, error: true };
+		}
+	} catch (err) {
+		return { success: false, error: true };
+	}
+};
+
+export const uploadLogo = async (
+	currentState: CurrentState,
+	data: FormData,
+) => {
+	try {
+		await prisma.setting.update({
+			where: { id: data.get("id") as string },
+			data: {
+				logoUrl: data.get("logoUrl") as string,
+			},
+		});
+		return { success: true, error: false };
+	} catch (err) {
+		return { success: false, error: err };
+	}
+};
+export const updateCompany = async (
+	currentState: CurrentState,
+	data: FormData,
+) => {
+	try {
+		await prisma.setting.update({
+			where: { id: data.get("id") as string },
+			data: {
+				companyName: data.get("companyName") as string,
+				companyEmail: data.get("companyEmail") as string,
+				companyPhone: data.get("companyPhone") as string,
+				addressLine1: data.get("addressLine1") as string,
+				addressLine2: data.get("addressLine2") as string,
+				city: data.get("city") as string,
+				state: data.get("state") as string,
+				postalCode: data.get("postalCode") as string,
+				country: data.get("country") as string,
+				logoUrl: data.get("logoUrl") as string,
+				currency: (data.get("currency") as string) || "USD",
+			},
+		});
+		return { success: true, error: false };
+	} catch (err) {
+		return { success: false, error: err };
 	}
 };
