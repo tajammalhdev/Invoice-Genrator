@@ -5,6 +5,27 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
+export const calculateTax = (subtotal: number, taxRate: number) => {
+	return (subtotal * taxRate) / 100;
+};
+/**
+ * Formats a number with commas and decimal places
+ *
+ * @param {number} number - Number to format
+ * @returns {string} A styled number to be displayed on the invoice
+ */
+export const formatNumberWithCommas = (number: number) => {
+	return number.toLocaleString("en-US", {
+		style: "decimal",
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	});
+};
+export const DATE_OPTIONS: Intl.DateTimeFormatOptions = {
+	year: "numeric",
+	month: "long",
+	day: "numeric",
+};
 export const copyToClipboard = (text: string) => {
 	navigator.clipboard.writeText(text);
 	toast.success("Copied to clipboard!");

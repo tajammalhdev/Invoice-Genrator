@@ -7,7 +7,7 @@ import {
 	PaymentSchemaValidation,
 	InvoiceDetails,
 } from "@/lib/zodSchemas";
-import { InvoiceStatus, PaymentTerm } from "@prisma/client";
+import { DiscountType, InvoiceStatus, PaymentTerm } from "@prisma/client";
 import { sendInvoiceEmail as sendInvoiceEmailService } from "@/lib/emailService";
 import { NextResponse } from "next/server";
 
@@ -164,6 +164,8 @@ export const createInvoice = async (
 				tax: parseFloat(data.get("tax") as string) || 0,
 				total: parseFloat(data.get("total") as string) || 0,
 				paymentTerm: data.get("paymentTerm") as PaymentTerm,
+				discountType: data.get("discountType") as DiscountType,
+				discountAmount: parseFloat(data.get("discountAmount") as string) || 0,
 				client: {
 					connect: {
 						id: data.get("clientId") as string,
@@ -228,6 +230,9 @@ export const updateInvoice = async (
 				subtotal: parseFloat(data.get("subtotal") as string) || 0,
 				total: parseFloat(data.get("total") as string) || 0,
 				paymentTerm: data.get("paymentTerm") as PaymentTerm,
+				tax: parseFloat(data.get("tax") as string) || 0,
+				discountType: data.get("discountType") as DiscountType,
+				discountAmount: parseFloat(data.get("discountAmount") as string) || 0,
 				client: {
 					connect: {
 						id: data.get("clientId") as string,
@@ -348,6 +353,43 @@ export const updateCompany = async (
 				country: data.get("country") as string,
 				logoUrl: data.get("logoUrl") as string,
 				currency: (data.get("currency") as string) || "USD",
+			},
+		});
+		return { success: true, error: false };
+	} catch (err) {
+		return { success: false, error: err };
+	}
+};
+
+export const updatePreferences = async (
+	currentState: CurrentState,
+	data: FormData,
+) => {
+	try {
+		await prisma.setting.update({
+			where: { id: data.get("id") as string },
+			data: {
+				dateFormat: data.get("dateFormat") as string,
+				taxRate: parseFloat(data.get("taxRate") as string) || 0,
+				invoicePrefix: data.get("invoicePrefix") as string,
+			},
+		});
+		return { success: true, error: false };
+	} catch (err) {
+		return { success: false, error: err };
+	}
+};
+
+export const updatingTemplate = async (
+	currentState: CurrentState,
+	data: FormData,
+) => {
+	try {
+		const session = await auth();
+		await prisma.setting.update({
+			where: { userId: session?.user?.id },
+			data: {
+				template: data.get("template") as string,
 			},
 		});
 		return { success: true, error: false };

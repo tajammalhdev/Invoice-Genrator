@@ -1,3 +1,4 @@
+import { DiscountType } from "@prisma/client";
 import { number, z } from "zod";
 
 // Manual enum definitions since Prisma client doesn't include them yet
@@ -112,12 +113,19 @@ export const InvoiceDetailsSchema = z.object({
 			},
 		),
 	items: z.array(ItemSchema),
-	subtotal: z.string().transform((val) => parseFloat(val) || 0),
-	discount: z
+	discount: z.string().optional(),
+	discountType: z
+		.string()
+		.transform((val) => val.toUpperCase())
+		.refine((val) => Object.values(DiscountType).includes(val as any), {
+			message: "Invalid Discount Type value",
+		}),
+	discountAmount: z
 		.string()
 		.transform((val) => parseFloat(val) || 0)
 		.optional(),
-	total: z.string().transform((val) => parseFloat(val) || 0),
+	subtotal: z.number(),
+	total: z.number(),
 	paymentTerm: z
 		.string()
 		.optional()

@@ -66,6 +66,11 @@ export default function PaymentForm({
 			router.refresh();
 		}
 	}, [state, router, type, setOpen]);
+	useEffect(() => {
+		if (state.error) {
+			toast.error("Failed to update company details");
+		}
+	}, [state.error]);
 
 	return (
 		<form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>

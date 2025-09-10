@@ -77,6 +77,11 @@ export default function EmailForm({
 			setOpen(false);
 		}
 	}, [state, setOpen]);
+	useEffect(() => {
+		if (state.error) {
+			toast.error("Failed to update company details");
+		}
+	}, [state.error]);
 
 	return (
 		<form className="space-y-4" onSubmit={handleSubmit}>

@@ -13,6 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum DiscountType {
+  PERCENTAGE
+  AMOUNT
+}
+
 model User {
   id            String          @id @default(cuid())
   name          String?
@@ -51,6 +56,7 @@ model Setting {
   invoicePrefix     String? @default("INV-")
   nextInvoiceNumber Int?    @default(1)
   logoUrl           String?
+  template          String? @default("1")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -119,26 +125,28 @@ enum InvoiceStatus {
 }
 
 model Invoice {
-  id          String        @id @default(cuid())
-  userId      String
-  user        User          @relation(fields: [userId], references: [id])
-  clientId    String
-  client      Client        @relation(fields: [clientId], references: [id])
-  number      String        @unique
-  issueDate   DateTime
-  dueDate     DateTime
-  notes       String?
-  status      InvoiceStatus @default(DRAFT)
-  items       InvoiceItem[]
-  payments    Payment[]
-  discount    Float         @default(0)
-  subtotal    Float         @default(0)
-  tax         Float         @default(0)
-  total       Float         @default(0)
-  paidTotal   Float         @default(0)
-  paymentTerm PaymentTerm   @default(NET30)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  clientId       String
+  client         Client        @relation(fields: [clientId], references: [id])
+  number         String        @unique
+  issueDate      DateTime
+  dueDate        DateTime
+  notes          String?
+  status         InvoiceStatus @default(DRAFT)
+  items          InvoiceItem[]
+  payments       Payment[]
+  discountType   DiscountType  @default(PERCENTAGE)
+  discountAmount Float?
+  discount       Float         @default(0)
+  subtotal       Float         @default(0)
+  tax            Float         @default(0)
+  total          Float         @default(0)
+  paidTotal      Float         @default(0)
+  paymentTerm    PaymentTerm   @default(NET30)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model InvoiceItem {

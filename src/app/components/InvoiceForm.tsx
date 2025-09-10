@@ -129,7 +129,6 @@ export default function InvoiceForm({
 	};
 
 	const tax = Number(watch("tax")) || Number(taxRate) || 0;
-	const discount = Number(watch("discountValue")) || 0;
 	const items_raw = watch("items") || [];
 	const itemTotals = items_raw.map((_: any, index: number) =>
 		watch(`items.${index}.total`),
@@ -139,28 +138,12 @@ export default function InvoiceForm({
 			return sum + (Number(total) || 0);
 		}, 0);
 	}, [itemTotals]);
-	let calculatedDiscountAmount = 0;
-	if (watch("discountType") === "percentage") {
-		calculatedDiscountAmount = (subtotal * discount) / 100;
-		if (calculatedDiscountAmount > subtotal) {
-			calculatedDiscountAmount = subtotal;
-		}
-	} else {
-		calculatedDiscountAmount = discount;
-		if (calculatedDiscountAmount > subtotal) {
-			calculatedDiscountAmount = subtotal;
-		}
-	}
+	// Discount calculation is now handled in DiscountField component
+	const calculatedDiscountAmount = Number(watch("discount")) || 0;
 
 	const taxableAmount = Math.max(subtotal - calculatedDiscountAmount, 0);
-	const calculatedTaxAmount = (taxableAmount * tax) / 100;
+	const calculatedTaxAmount = (subtotal * tax) / 100;
 	const total = taxableAmount + calculatedTaxAmount;
-	// Update form values only when calculations change
-	useEffect(() => {
-		setCustomValue("discount", Number(calculatedDiscountAmount).toFixed(2));
-		setCustomValue("total", Number(total).toFixed(2));
-		setCustomValue("subtotal", Number(subtotal).toFixed(2));
-	}, [total, setCustomValue]);
 
 	// Handle redirect after successful creation
 	useEffect(() => {
@@ -182,8 +165,22 @@ export default function InvoiceForm({
 			formAction(formData);
 		});
 	};
+
+	// Update form values only when calculations change
+	useEffect(() => {
+		setCustomValue("total", Number(total));
+		setCustomValue("subtotal", Number(subtotal));
+	}, [total, setCustomValue]);
+
 	const handleFormError = (errors: any) => {
-		console.error("❌ Form validation errors:", errors);
+		console.log("📋 Form errors:", errors);
+		console.log(
+			"🔍 Error details:",
+			Object.keys(errors).map((key) => ({
+				field: key,
+				error: errors[key],
+			})),
+		);
 	};
 
 	useEffect(() => {
@@ -197,6 +194,7 @@ export default function InvoiceForm({
 			{type === "edit" && data?.id && (
 				<input type="hidden" name="id" value={data.id} />
 			)}
+
 			<InvoiceHeader isSubmitting={isSubmitting} type={type} />
 
 			<div className="w-full px-4 py-6">
@@ -303,16 +301,12 @@ export default function InvoiceForm({
 								</Select>
 							</FormField>
 							<DiscountField
-								discountType={watch("discountType") || "percentage"}
-								discountValue={watch("discountValue") || "0"}
-								onDiscountTypeChange={(value) =>
-									setCustomValue("discountType", value)
-								}
-								onDiscountValueChange={(value) =>
-									setCustomValue("discountValue", value)
-								}
-								error={errors.discount?.message as string}
+								error={errors.discountAmount?.message as string}
 								currency={currency}
+								register={register}
+								errors={errors}
+								setCustomValue={setCustomValue}
+								watch={watch}
 							/>
 						</CardContent>
 					</Card>
@@ -372,7 +366,7 @@ export default function InvoiceForm({
 									<div className="flex justify-between">
 										<span className="text-sm font-medium">Discount:</span>
 										<span className="text-sm text-right">
-											{currency} {Number(discount).toFixed(2)}
+											{currency} {Number(calculatedDiscountAmount).toFixed(2)}
 										</span>
 									</div>
 									<div className="flex justify-between">
