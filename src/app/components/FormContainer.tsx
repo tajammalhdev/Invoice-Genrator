@@ -3,7 +3,7 @@ import FormModal from "./FormModal";
 import { auth } from "@/lib/auth";
 export type FormContainerProps = {
 	table: "client" | "payment" | "invoice" | "Email";
-	type: "create" | "update" | "delete" | "email";
+	type: "create" | "update" | "delete" | "email" | "pdf";
 	data?: any;
 	id?: number | string;
 	label?: string;
@@ -76,6 +76,7 @@ const FormContainer = async ({
 				...invoice,
 			};
 			break;
+
 		default:
 			break;
 	}

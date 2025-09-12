@@ -7,9 +7,15 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useActionState } from "react";
 import { FormContainerProps } from "./FormContainer";
 import { toast } from "sonner";
-import { deleteClient, deleteInvoice } from "../../../actions/actions";
 import {
+	deleteClient,
+	deleteInvoice,
+	generateInvoicePdf,
+} from "../../../actions/actions";
+import {
+	Download,
 	EditIcon,
+	FileTextIcon,
 	Loader2,
 	MailIcon,
 	PlusIcon,
@@ -33,6 +39,9 @@ const ClientForm = dynamic(() => import("./forms/ClientForm"), {
 const deleteActionMap = {
 	client: deleteClient,
 	invoice: deleteInvoice,
+};
+const pdfActionMap = {
+	invoice: generateInvoicePdf,
 };
 export interface FormProps {
 	setOpen: Dispatch<SetStateAction<boolean>>;
@@ -97,6 +106,19 @@ const FormModal = ({
 			},
 		);
 
+		const [pdfState, pdfAction, isPdfSubmitting] = useActionState(
+			pdfActionMap[table as keyof typeof pdfActionMap] ||
+				(() => Promise.resolve({ success: false, error: false })),
+			{
+				success: false,
+				error: false,
+			} as any,
+		);
+
+		console.log("PDF action:", pdfAction);
+		console.log("Table:", table);
+		console.log("PDF action map:", pdfActionMap);
+
 		const router = useRouter();
 
 		useEffect(() => {
@@ -105,7 +127,35 @@ const FormModal = ({
 				setOpen(false);
 				router.refresh();
 			}
+			if (state.error) {
+				console.error("Delete error:", state.error);
+				toast(`Error deleting ${table}: ${state.error}`);
+			}
 		}, [state, router]);
+
+		useEffect(() => {
+			if (pdfState.success) {
+				toast(`PDF has been generated!`);
+
+				// Handle PDF download if pdfData is available
+				if (pdfState.pdfData && pdfState.filename) {
+					const link = document.createElement("a");
+					link.href = `data:application/pdf;base64,${pdfState.pdfData}`;
+					link.download = pdfState.filename;
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+				}
+
+				setOpen(false);
+				router.refresh();
+			}
+			if (pdfState.error) {
+				console.error("PDF generation error:", pdfState.error);
+				console.error("Full PDF state:", pdfState);
+				toast(`Error generating PDF: ${pdfState.error}`);
+			}
+		}, [pdfState, router]);
 
 		return type === "delete" && id ? (
 			<form action={formAction} className="p-4 flex flex-col gap-4">
@@ -124,6 +174,33 @@ const FormModal = ({
 						</>
 					) : (
 						"Delete"
+					)}
+				</button>
+			</form>
+		) : type === "pdf" && id ? (
+			<form
+				action={pdfAction}
+				className="p-4 flex flex-col gap-4"
+				onSubmit={(e) => {
+					console.log("PDF form submitted");
+					console.log("Form action:", pdfAction);
+					console.log("Form data:", new FormData(e.currentTarget));
+				}}>
+				<input type="hidden" name="id" defaultValue={id} />
+				<span className="text-center font-medium">
+					Are you sure you want to generate the PDF for this invoice?
+				</span>
+				<button
+					type="submit"
+					className="bg-lamaYellow text-white py-2 px-6 flex items-center justify-center rounded-md border-none w-max self-center"
+					disabled={isPdfSubmitting}>
+					{isPdfSubmitting ? (
+						<>
+							<Loader2 className="h-4 w-4 animate-spin" />
+							Generate PDF
+						</>
+					) : (
+						"Generate PDF"
 					)}
 				</button>
 			</form>
@@ -154,6 +231,12 @@ const FormModal = ({
 				{type === "update" && (
 					<>
 						<EditIcon className="size-4 shrink-0 opacity-50" />
+						{label}
+					</>
+				)}
+				{type === "pdf" && (
+					<>
+						<Download className="size-4 shrink-0 opacity-50" />
 						{label}
 					</>
 				)}

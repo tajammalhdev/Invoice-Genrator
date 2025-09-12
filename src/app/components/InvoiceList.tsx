@@ -201,6 +201,11 @@ export default async function InvoiceList({
 														</Link>
 													</Button>
 													<FormContainer
+														table="invoice"
+														type="pdf"
+														id={invoice.id}
+													/>
+													<FormContainer
 														table="Email"
 														type="email"
 														id={invoice.id}

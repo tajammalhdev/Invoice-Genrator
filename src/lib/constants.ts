@@ -1,3 +1,8 @@
+/**
+ * Environment
+ */
+export const ENV = process.env.NODE_ENV;
+
 export const ITEM_PER_PAGE = 10;
 
 export const emailTemplates = {
@@ -23,3 +28,9 @@ export const emailTemplates = {
 			"This is our final notice regarding invoice #{invoiceNumber}. Payment is significantly overdue (due date: {dueDate}). Please contact us immediately to arrange payment or discuss payment terms.",
 	},
 };
+
+/**
+ * Tailwind
+ */
+export const TAILWIND_CDN =
+	"https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";

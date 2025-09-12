@@ -9,7 +9,8 @@ import {
 } from "@/lib/zodSchemas";
 import { DiscountType, InvoiceStatus, PaymentTerm } from "@prisma/client";
 import { sendInvoiceEmail as sendInvoiceEmailService } from "@/lib/emailService";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { generatePdfService } from "../services/invoice/server/generatePdfService";
 
 type CurrentState = { success: boolean; error: unknown };
 
@@ -395,5 +396,83 @@ export const updatingTemplate = async (
 		return { success: true, error: false };
 	} catch (err) {
 		return { success: false, error: err };
+	}
+};
+
+/** Invoice PDF */
+export const generateInvoicePdf = async (
+	currentState: CurrentState,
+	data: FormData,
+) => {
+	try {
+		console.log("=== PDF Generation Action Started ===");
+		console.log("FormData entries:", Array.from(data.entries()));
+
+		const invoiceId = data.get("id") as string;
+		console.log("Invoice ID:", invoiceId);
+
+		if (!invoiceId) {
+			console.error("No invoice ID provided");
+			return {
+				success: false,
+			};
+		}
+
+		const invoice = await prisma.invoice.findUnique({
+			where: { id: invoiceId },
+			include: { items: true, client: true, user: true, payments: true },
+		});
+
+		if (!invoice) {
+			console.error("Invoice not found for ID:", invoiceId);
+			return {
+				success: false,
+				error: `Invoice not found for ID: ${invoiceId}`,
+			};
+		}
+
+		const session = await auth();
+		const settings = await prisma.setting.findUnique({
+			where: { userId: session?.user?.id },
+		});
+		const mockRequest = {
+			json: async () => ({ invoice, settings }),
+		} as NextRequest;
+
+		const response = await generatePdfService(mockRequest);
+
+		if (response.status === 200) {
+			console.log("PDF generated successfully");
+			// Get the PDF blob from the response
+			const pdfBlob = await response.blob();
+			const pdfArrayBuffer = await pdfBlob.arrayBuffer();
+			const pdfBase64 = Buffer.from(pdfArrayBuffer).toString("base64");
+
+			return {
+				success: true,
+				error: false,
+				pdfData: pdfBase64,
+				filename: `invoice-${invoice.number}.pdf`,
+			};
+		} else {
+			// Read the response body properly
+			const errorText = await response.text();
+			console.error("PDF generation failed with status:", response.status);
+			console.error("PDF generation error:", errorText);
+			return {
+				success: false,
+				error: `PDF generation failed: ${response.status} - ${errorText}`,
+			};
+		}
+	} catch (err) {
+		console.error("PDF generation error:", err);
+		console.error(
+			"Error stack:",
+			err instanceof Error ? err.stack : "No stack trace",
+		);
+		return {
+			success: false,
+			error: `Exception: ${err instanceof Error ? err.message : String(err)}`,
+		};
 	}
 };
